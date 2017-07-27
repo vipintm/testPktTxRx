@@ -43,7 +43,7 @@ void pktdump(const u_char * pu8, int nLength);
 
 // exit vars
 sig_atomic_t running = 0;
-int max_packno = 100;
+uint8_t max_packno = 100;
 
 // Let close by CTL+C
 void sig_handler(int signo) {
@@ -54,11 +54,13 @@ void sig_handler(int signo) {
 }
 
 // get time when tx interrupt is received
+uint8_t tx_pktno = 0;
 struct timespec tx_time;
 void tx_interrupt(void* args)
 {
     // Get the tx time
 	clock_gettime(CLOCK_REALTIME, &tx_time);
+	++tx_pktno;
 }
 
 //
@@ -74,7 +76,8 @@ int main() {
 	long int delayInSec;
 
 	// frame count info
-	uint8_t packno = 1;
+	uint8_t packno = 0;
+	//uint8_t rx_pktno = 0;
 
 	// pcap
 	pcap_t *handle;
@@ -115,12 +118,14 @@ int main() {
 	ret = mraa_gpio_dir(gpio, MRAA_GPIO_OUT);
 	if (ret != MRAA_SUCCESS) {
 		mraa_result_print(ret);
+		exit(1);
 	}
 
 	// set direction to OUT for pkt rx trigger
 	ret = mraa_gpio_dir(timePin, MRAA_GPIO_IN);
 	if (ret != MRAA_SUCCESS) {
 		mraa_result_print(ret);
+		exit(1);
 	}
 
 	printf("init-ed pin%d\n", IOPIN);
@@ -129,6 +134,7 @@ int main() {
     ret = mraa_gpio_isr(timePin, MRAA_GPIO_EDGE_RISING, &tx_interrupt, NULL);
 	if (ret != MRAA_SUCCESS) {
 		mraa_result_print(ret);
+		exit(1);
 	}
 
 	// registor signal fuc
@@ -156,11 +162,13 @@ int main() {
 	ret = mraa_gpio_write(gpio, 0);
 	if (ret != MRAA_SUCCESS) {
 		mraa_result_print(ret);
+		exit(1);
 	}
 	sleep(1);
 	ret = mraa_gpio_write(gpio, 1);
 	if (ret != MRAA_SUCCESS) {
 		mraa_result_print(ret);
+		exit(1);
 	}
 	sleep(1);
 
@@ -183,18 +191,34 @@ int main() {
 			printf("No packet found.\n");
 		} else {
 
+			// Next pkt
+			++packno;
+
 			// Packet receive time
 			clock_gettime(CLOCK_REALTIME, &end_time);
 
-			// Calculate tx->rx time
-			if (end_time.tv_nsec >= tx_time.tv_nsec
-					&& end_time.tv_sec >= tx_time.tv_sec) {
-				delayInSec = (end_time.tv_sec - tx_time.tv_sec);
-				delayInNanos = (end_time.tv_nsec - tx_time.tv_nsec);
+			// Got a pkt, trigger GPIO
+			ret = mraa_gpio_write(gpio, 1);
+			if (ret != MRAA_SUCCESS) {
+				mraa_result_print(ret);
+			}
+
+			if(tx_pktno == packno) {
+
+				// Calculate tx->rx time
+				if (end_time.tv_nsec >= tx_time.tv_nsec
+						&& end_time.tv_sec >= tx_time.tv_sec) {
+					delayInSec = (end_time.tv_sec - tx_time.tv_sec);
+					delayInNanos = (end_time.tv_nsec - tx_time.tv_nsec);
+				} else {
+					// Something wrong
+					diffInSec = 99999;
+					diffInNanos = 0;
+				}
+			} else if (tx_pktno == 0) {
+				printf("Tx GPIO interrupt is not received \n");
 			} else {
-				// 1 sec ... somthing wrong
-				diffInSec = 99999;
-				diffInNanos = 0;
+				printf("Packet is missing tx :%d rx :%d\n", tx_pktno, packno);
 			}
 
 			// Calculate wait time <-- can be used to calculate linux stack delay
@@ -210,7 +234,7 @@ int main() {
 						((BILLION - start_time.tv_nsec) + end_time.tv_nsec);
 
 			} else {
-				// 1 sec ... somthing wrong
+				// 1 sec ... something wrong
 				diffInSec = 1;
 				diffInNanos = 0;
 			}
@@ -233,10 +257,9 @@ int main() {
 			pktdump(packet, pktlength);
 
 			// Check for max number of pkts
-			if (packno >= max_packno) {
+			if (packno >= max_packno || tx_pktno >= max_packno) {
 				running = -1;
 			}
-			packno++;
 		}
 	}
 

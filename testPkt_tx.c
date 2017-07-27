@@ -164,16 +164,16 @@ int main(void) {
 	}
 
 	printf("\n Test GPIO .... \n");
-    ret = mraa_gpio_write(gpio, 0);
+	ret = mraa_gpio_write(gpio, 0);
 	if (ret != MRAA_SUCCESS) {
 		mraa_result_print(ret);
 	}
 	sleep(1);
-    ret = mraa_gpio_write(gpio, 1);
-    if (ret != MRAA_SUCCESS) {
-        mraa_result_print(ret);
-    }
-    sleep(1);
+	ret = mraa_gpio_write(gpio, 1);
+	if (ret != MRAA_SUCCESS) {
+		mraa_result_print(ret);
+	}
+	sleep(1);
 
 	printf("\n Let start tx .... \n");
 	while (running == 0) {
