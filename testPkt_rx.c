@@ -53,6 +53,14 @@ void sig_handler(int signo) {
     }
 }
 
+// get time when tx interrupt is received
+struct timespec tx_time;
+void tx_interrupt(void* args)
+{
+    // Get the tx time
+	clock_gettime(CLOCK_REALTIME, &tx_time);
+}
+
 //
 int main() {
 
@@ -62,6 +70,8 @@ int main() {
 	struct timespec end_time;
 	long int diffInNanos;
 	long int diffInSec;
+	long int delayInNanos;
+	long int delayInSec;
 
 	// frame count info
 	uint8_t packno = 1;
@@ -84,6 +94,8 @@ int main() {
 
 	// initilize GPIO
 	mraa_init();
+
+	// pkt rx trigger
 	mraa_gpio_context gpio;
 	gpio = mraa_gpio_init(IOPIN);
 	if (gpio == NULL) {
@@ -91,13 +103,33 @@ int main() {
 		exit(1);
 	}
 
-	// set direction to OUT
+	// pkt tx trigger
+	mraa_gpio_context timePin;
+	timePin = mraa_gpio_init(TRGPIN);
+	if (gpio == NULL) {
+		fprintf(stderr, "Error in using pin%d, NO GPIO no TEST ", TRGPIN);
+		exit(1);
+	}
+
+	// set direction to OUT for pkt rx trigger
 	ret = mraa_gpio_dir(gpio, MRAA_GPIO_OUT);
 	if (ret != MRAA_SUCCESS) {
 		mraa_result_print(ret);
 	}
 
+	// set direction to OUT for pkt rx trigger
+	ret = mraa_gpio_dir(timePin, MRAA_GPIO_IN);
+	if (ret != MRAA_SUCCESS) {
+		mraa_result_print(ret);
+	}
+
 	printf("init-ed pin%d\n", IOPIN);
+
+	// register interrupt for tx gpio
+    ret = mraa_gpio_isr(timePin, MRAA_GPIO_EDGE_RISING, &tx_interrupt, NULL);
+	if (ret != MRAA_SUCCESS) {
+		mraa_result_print(ret);
+	}
 
 	// registor signal fuc
 	signal(SIGINT, sig_handler);
@@ -121,16 +153,16 @@ int main() {
 
 	// Test GPIO
 	printf("\n Test GPIO .... \n");
-    ret = mraa_gpio_write(gpio, 0);
+	ret = mraa_gpio_write(gpio, 0);
 	if (ret != MRAA_SUCCESS) {
 		mraa_result_print(ret);
 	}
 	sleep(1);
-    ret = mraa_gpio_write(gpio, 1);
-    if (ret != MRAA_SUCCESS) {
-        mraa_result_print(ret);
-    }
-    sleep(1);
+	ret = mraa_gpio_write(gpio, 1);
+	if (ret != MRAA_SUCCESS) {
+		mraa_result_print(ret);
+	}
+	sleep(1);
 
 	printf("\n Let start rx .... \n");
 
@@ -153,6 +185,17 @@ int main() {
 
 			// Packet receive time
 			clock_gettime(CLOCK_REALTIME, &end_time);
+
+			// Calculate tx->rx time
+			if (end_time.tv_nsec >= tx_time.tv_nsec
+					&& end_time.tv_sec >= tx_time.tv_sec) {
+				delayInSec = (end_time.tv_sec - tx_time.tv_sec);
+				delayInNanos = (end_time.tv_nsec - tx_time.tv_nsec);
+			} else {
+				// 1 sec ... somthing wrong
+				diffInSec = 99999;
+				diffInNanos = 0;
+			}
 
 			// Calculate wait time <-- can be used to calculate linux stack delay
 			if (end_time.tv_nsec >= start_time.tv_nsec
@@ -180,9 +223,11 @@ int main() {
 
 
 			// Times
-			printf("Got a packet [%d] at %ld.%09ld sec (with %ld.%09ld sec) \n",
-					packno,end_time.tv_sec, end_time.tv_nsec,
-					diffInSec, diffInNanos);
+			printf("Got a packet [%d] at %ld.%09ld sec"
+					"(waiting %ld.%09ld sec) "
+					"tx->rx : %ld.%09ld sec\n",
+					packno, end_time.tv_sec, end_time.tv_nsec,
+					diffInSec, diffInNanos, delayInSec, delayInNanos);
 
 			// Dump the packet
 			pktdump(packet, pktlength);
