@@ -11,8 +11,8 @@ clean:
 	rm -f build/testPkt_rx *~
 
 send: 
-	scp build/testPkt_rx build/testPkt_tx scripts/setup.sh root@10.0.1.193:/media/realroot/
-	scp build/testPkt_rx build/testPkt_tx scripts/setup.sh root@10.0.1.192:/media/realroot/
+	scp build/testPkt_rx build/testPkt_tx scripts/setup.sh test/run.sh root@10.0.1.193:/media/realroot/
+	scp build/testPkt_rx build/testPkt_tx scripts/setup.sh test/run.sh root@10.0.1.192:/media/realroot/
 
 install:
 	mkdir -p $(DESTDIR)/usr/bin
