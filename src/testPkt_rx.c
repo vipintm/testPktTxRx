@@ -241,15 +241,15 @@ int main() {
 				diffInNanos = 0;
 			}
 
-			// Get pkt length
-			pktlength = packet_header.len;
-			printf("Lenght  of packet no tx : %d rx : %d - %d\n",
-					rx_pktno, packno, pktlength);
-
 			// pkt number from data
 			pktbuf = (uint8_t *) packet;
 			pktnobuf = (uint8_t *) (pktbuf + 96); // 96 ->> magic location
 			memcpy(&rx_pktno, pktnobuf, sizeof(uint8_t));
+
+			// Get pkt length
+			pktlength = packet_header.len;
+			printf("Lenght  of packet no tx : %d rx : %d - %d\n",
+					rx_pktno, packno, pktlength);
 
 			// TODO : extract time stamp
 
@@ -284,6 +284,12 @@ int main() {
 
 	// make sure gpio is low
 	ret = mraa_gpio_write(gpio, 0);
+	if (ret != MRAA_SUCCESS) {
+		mraa_result_print(ret);
+	}
+
+	// Stop the current interrupt watcher
+    ret = mraa_gpio_isr_exit(timePin);
 	if (ret != MRAA_SUCCESS) {
 		mraa_result_print(ret);
 	}

@@ -31,7 +31,7 @@
 
 // Constants
 #define BILLION  1000000000L // <- nano
-#define nDelay 0 // 1000000 <- this is too much
+#define nDelay 100 // 1000000 <- this is too much
 #define IOPIN 8 // using gpio pin 40 (IO08)
 #define DATA_SZ 100 // Just filling data
 #define STRING_SZ (DATA_SZ - 10)
@@ -251,7 +251,8 @@ int main(void) {
 		// IP TOS --- TODO
 		// https://www.tucny.com/Home/dscp-tos
 		// http://www.cisco.com/c/en/us/products/collateral/switches/catalyst-3750-series-switches/prod_bulletin0900aecd80394844.html
-		ip->tos = 0xb8;
+		//ip->tos = 0xb8;
+		ip->tos = 0x00;
 
 		// Frag
 		ip->id = 0;
