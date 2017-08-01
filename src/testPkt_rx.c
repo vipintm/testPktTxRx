@@ -45,10 +45,19 @@ void pktdump(const u_char * pu8, int nLength);
 sig_atomic_t running = 0;
 uint8_t max_packno = 100;
 
+// pcap
+pcap_t *handle;
+
+// GPIO
+mraa_gpio_context gpio;
+mraa_gpio_context timePin;
+
 // Let close by CTL+C
 void sig_handler(int signo) {
     if (signo == SIGINT) {
         printf("Stopping pkt rx and shutdown IO%d and IO%d\n", IOPIN,TRGPIN);
+        //
+        pcap_breakloop(handle);
         running = -1;
     }
 }
@@ -80,7 +89,6 @@ int main() {
 	uint8_t rx_pktno = 0;
 
 	// pcap
-	pcap_t *handle;
 	const u_char *packet;
 	struct pcap_pkthdr packet_header;
 	char error_buffer[PCAP_ERRBUF_SIZE];
@@ -101,15 +109,13 @@ int main() {
 	mraa_init();
 
 	// pkt rx trigger
-	mraa_gpio_context gpio;
-	gpio = mraa_gpio_init(IOPIN);
+		gpio = mraa_gpio_init(IOPIN);
 	if (gpio == NULL) {
 		fprintf(stderr, "Error in using pin%d, NO GPIO no TEST ", IOPIN);
 		exit(1);
 	}
 
 	// pkt tx trigger
-	mraa_gpio_context timePin;
 	timePin = mraa_gpio_init(TRGPIN);
 	if (gpio == NULL) {
 		fprintf(stderr, "Error in using pin%d, NO GPIO no TEST ", TRGPIN);
