@@ -45,10 +45,10 @@ void pktdump(const u_char * pu8, int nLength);
 sig_atomic_t running = 0;
 uint8_t max_packno = 100;
 
-// pcap
+// pcap context
 pcap_t *handle;
 
-// GPIO
+// GPIO context
 mraa_gpio_context gpio;
 mraa_gpio_context timePin;
 
@@ -56,7 +56,7 @@ mraa_gpio_context timePin;
 void sig_handler(int signo) {
     if (signo == SIGINT) {
         printf("Stopping pkt rx and shutdown IO%d and IO%d\n", IOPIN,TRGPIN);
-        //
+        // lets stop pcap listen
         pcap_breakloop(handle);
         running = -1;
     }
@@ -264,12 +264,12 @@ int main() {
 				printf("Got a packet [%d] at %ld.%09ld sec"
 						"(waiting %ld.%09ld sec) "
 						"tx->rx : %ld.%09ld sec\n",
-						packno, end_time.tv_sec, end_time.tv_nsec,
+						rx_pktno, end_time.tv_sec, end_time.tv_nsec,
 						diffInSec, diffInNanos, delayInSec, delayInNanos);
 			} else {
 				printf("Got a packet [%d] at %ld.%09ld sec"
 						"(waiting %ld.%09ld sec)\n",
-						packno, end_time.tv_sec, end_time.tv_nsec,
+						rx_pktno, end_time.tv_sec, end_time.tv_nsec,
 						diffInSec, diffInNanos);
 			}
 

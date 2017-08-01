@@ -31,8 +31,9 @@
 
 // Constants
 #define BILLION  1000000000L // <- nano
-#define nDelay 100 // 1000000 <- this is too much
+#define nDelay  1000000 // 1000000 <- this is too much
 #define IOPIN 8 // using gpio pin 40 (IO08)
+#define TRGPIN 9 // using gpio pin ?? (IO09)
 #define DATA_SZ 100 // Just filling data
 #define STRING_SZ (DATA_SZ - 10)
 
@@ -131,20 +132,33 @@ int main(void) {
 
 	// GPIO mraa
 	mraa_result_t ret = MRAA_SUCCESS;
+	mraa_gpio_context gpio;
+	mraa_gpio_context timePin;
 
 	// EXEC
 
-	// initilize GPIO
+	// initilize GPIO LED / ext trigger
 	mraa_init();
-	mraa_gpio_context gpio;
 	gpio = mraa_gpio_init(IOPIN);
 	if (gpio == NULL) {
 		fprintf(stderr, "Error in using pin%d, NO GPIO no TEST ", IOPIN);
 		exit(1);
 	}
 
+	// initilize GPIO trigger for rx board
+	timePin = mraa_gpio_init(TRGPIN);
+	if (timePin == NULL) {
+		fprintf(stderr, "Error in using pin%d, NO GPIO no TEST ", TRGPIN);
+		exit(1);
+	}
+
 	// set direction to OUT
 	ret = mraa_gpio_dir(gpio, MRAA_GPIO_OUT);
+	if (ret != MRAA_SUCCESS) {
+		mraa_result_print(ret);
+	}
+
+	ret = mraa_gpio_dir(timePin, MRAA_GPIO_OUT);
 	if (ret != MRAA_SUCCESS) {
 		mraa_result_print(ret);
 	}
@@ -180,6 +194,11 @@ int main(void) {
 
 		// Make sure GPIO is low
 	    ret = mraa_gpio_write(gpio, 0);
+	    if (ret != MRAA_SUCCESS) {
+	        mraa_result_print(ret);
+	    }
+
+	    ret = mraa_gpio_write(timePin, 0);
 	    if (ret != MRAA_SUCCESS) {
 	        mraa_result_print(ret);
 	    }
@@ -310,6 +329,11 @@ int main(void) {
 		clock_gettime(CLOCK_REALTIME, &start_time);
 
 		// Trigger GPIO high
+	    ret = mraa_gpio_write(timePin, 1);
+	    if (ret != MRAA_SUCCESS) {
+	        mraa_result_print(ret);
+	    }
+
 	    ret = mraa_gpio_write(gpio, 1);
 	    if (ret != MRAA_SUCCESS) {
 	        mraa_result_print(ret);
@@ -319,6 +343,11 @@ int main(void) {
 		if (pcap_sendpacket(ppcap, buf, sz) == 0) {
 
 			// GPIO to low
+		    ret = mraa_gpio_write(timePin, 0);
+		    if (ret != MRAA_SUCCESS) {
+		        mraa_result_print(ret);
+		    }
+
 		    ret = mraa_gpio_write(gpio, 0);
 		    if (ret != MRAA_SUCCESS) {
 		        mraa_result_print(ret);
@@ -378,11 +407,22 @@ int main(void) {
 	    mraa_result_print(ret);
 	}
 
+	ret = mraa_gpio_write(timePin, 0);
+	if (ret != MRAA_SUCCESS) {
+	    mraa_result_print(ret);
+	}
+
 	// close gpio
 	ret = mraa_gpio_close(gpio);
 	if (ret != MRAA_SUCCESS) {
 		mraa_result_print(ret);
 	}
+
+	ret = mraa_gpio_close(timePin);
+	if (ret != MRAA_SUCCESS) {
+		mraa_result_print(ret);
+	}
+
 	return ret;
 }
 

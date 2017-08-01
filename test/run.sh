@@ -1,5 +1,8 @@
 #!/bin/bash
 
-echo "No test running ..."
+echo "Lets run setup ..."
+./setup.sh
+echo "Let start test ..."
+$1
 
-exit 0
+exit $?
