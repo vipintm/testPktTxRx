@@ -10,7 +10,7 @@ WINT=$(iwconfig 2> /dev/null | grep "IEEE 802.11bgn" | cut -d" " -f1)
 
 # Remove if found
 # Normal case, at boot only 1 interface is created
-if [ -z $WINT ]
+if [ ! -z $WINT ]
 then
 	echo "Found $WINT, and removing it ..."
 	iw dev $WINT del
