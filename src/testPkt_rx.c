@@ -77,7 +77,7 @@ int main() {
 
 	// frame count info
 	uint8_t packno = 0;
-	//uint8_t rx_pktno = 0;
+	uint8_t rx_pktno = 0;
 
 	// pcap
 	pcap_t *handle;
@@ -91,6 +91,8 @@ int main() {
 
 	// for packet dump
 	int pktlength = 0;
+	uint8_t *pktbuf;
+	uint8_t *pktnobuf;
 
 	// GPIO mraa
 	mraa_result_t ret = MRAA_SUCCESS;
@@ -241,29 +243,44 @@ int main() {
 
 			// Get pkt length
 			pktlength = packet_header.len;
-			printf("Lenght  of packet %d\n", pktlength);
+			printf("Lenght  of packet no tx : %d rx : %d - %d\n",
+					rx_pktno, packno, pktlength);
 
-			// TODO : extract time stamp and pkt number from data
+			// pkt number from data
+			pktbuf = (uint8_t *) packet;
+			pktnobuf = (uint8_t *) (pktbuf + 96); // 96 ->> magic location
+			memcpy(&rx_pktno, pktnobuf, sizeof(uint8_t));
 
+			// TODO : extract time stamp
 
 			// Times
-			printf("Got a packet [%d] at %ld.%09ld sec"
-					"(waiting %ld.%09ld sec) "
-					"tx->rx : %ld.%09ld sec\n",
-					packno, end_time.tv_sec, end_time.tv_nsec,
-					diffInSec, diffInNanos, delayInSec, delayInNanos);
+			if(tx_pktno == packno) {
+				printf("Got a packet [%d] at %ld.%09ld sec"
+						"(waiting %ld.%09ld sec) "
+						"tx->rx : %ld.%09ld sec\n",
+						packno, end_time.tv_sec, end_time.tv_nsec,
+						diffInSec, diffInNanos, delayInSec, delayInNanos);
+			} else {
+				printf("Got a packet [%d] at %ld.%09ld sec"
+						"(waiting %ld.%09ld sec)\n",
+						packno, end_time.tv_sec, end_time.tv_nsec,
+						diffInSec, diffInNanos);
+			}
 
 			// Dump the packet
 			pktdump(packet, pktlength);
 
 			// Check for max number of pkts
-			if (packno >= max_packno || tx_pktno >= max_packno) {
+			if (packno >= max_packno || tx_pktno >= max_packno || rx_pktno >= max_packno) {
 				running = -1;
 			}
 		}
 	}
 
 	printf("\n Let finish ....\n");
+
+	// close pcap
+	pcap_close(handle);
 
 	// make sure gpio is low
 	ret = mraa_gpio_write(gpio, 0);

@@ -31,7 +31,7 @@
 
 // Constants
 #define BILLION  1000000000L // <- nano
-#define nDelay 1000000 // 0 <- this is too much
+#define nDelay 0 // 1000000 <- this is too much
 #define IOPIN 8 // using gpio pin 40 (IO08)
 #define DATA_SZ 100 // Just filling data
 #define STRING_SZ (DATA_SZ - 10)
