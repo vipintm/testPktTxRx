@@ -219,9 +219,14 @@ int main() {
 			// Get pkt length
 			pktlength = packet_header.len;
 			printf("Lenght  of packet no tx : %d rx : %d - %d\n",
-					rx_pktno, packno, pktlength);
+					tx_pktno, rx_pktno, pktlength);
 
 			// TODO : extract time stamp
+
+			if(tx_pktno == packno || rx_pktno == packno) {
+				printf("Packet is missing tx :%d rx :%d counted pkt no :%d\n",
+						tx_pktno, rx_pktno, packno);
+			}
 
 			// Calculate tx->rx time
 			if(tx_pktno == rx_pktno) {
@@ -237,8 +242,6 @@ int main() {
 				}
 			} else if (tx_pktno == 0 || tx_pktno < rx_pktno) {
 				printf("Tx GPIO interrupt is not received \n");
-			} else {
-				printf("Packet is missing tx :%d rx :%d\n", tx_pktno, packno);
 			}
 
 			// Calculate wait time <-- can be used to calculate linux stack delay
