@@ -25,6 +25,9 @@
 #include <pcap.h>
 //
 
+//debug
+//#define DEBUG 1
+
 // IEEE 802.11 Types <-- only data type required
 #define WLAN_FC_TYPE_DATA	2
 #define WLAN_FC_SUBTYPE_DATA	0
@@ -99,8 +102,10 @@ int main(void) {
 	struct timespec send_time;
 	struct timespec start_time;
 	struct timespec end_time;
+#ifdef DEBUG
 	long int diffInNanos;
 	long int diffSec;
+#endif
 
 	// frame count info
 	uint8_t packno = 1;
@@ -356,6 +361,7 @@ int main(void) {
 			// record time
 			clock_gettime(CLOCK_REALTIME, &end_time);
 
+#ifdef DEBUG
 			// calculate tx time in sec + nano sec
 			if (end_time.tv_nsec >= start_time.tv_nsec
 					&& end_time.tv_sec >= start_time.tv_sec) {
@@ -376,6 +382,10 @@ int main(void) {
 			printf("Send a packet [%d] at %ld.%09ld sec (with %ld.%09ld sec) \n",
 					packno, end_time.tv_sec, end_time.tv_nsec, diffSec,
 					diffInNanos);
+#else
+			printf("[%d] @ %ld.%09ld \n",
+					packno, end_time.tv_sec, end_time.tv_nsec);
+#endif
 		} else {
 			pcap_perror(ppcap, "Failed to inject packet");
 			running = -1;

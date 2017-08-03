@@ -26,8 +26,13 @@
 #include <mraa.h>
 //
 
+//debug
+//#define DEBUG 1
+
+#ifdef DEBUG
 // dump pkt
 void pktdump(const u_char * pu8, int nLength);
+#endif
 
 // Interface
 #define WLANDEV "mon0"
@@ -79,8 +84,10 @@ int main() {
 	// time
 	struct timespec start_time;
 	struct timespec end_time;
+#ifdef DEBUG
 	long int diffInNanos;
 	long int diffInSec;
+#endif
 	long int delayInNanos;
 	long int delayInSec;
 
@@ -97,8 +104,12 @@ int main() {
 			"udp && src 169.254.1.1 && dst 255.255.255.255 && src port 50505 && dst port 50505";
 	bpf_u_int32 netmask=0xffffff;
 
+#ifdef DEBUG
 	// for packet dump
 	int pktlength = 0;
+#endif
+
+	// pkt info
 	uint8_t *pktbuf;
 	uint8_t *pktnobuf;
 
@@ -109,7 +120,7 @@ int main() {
 	mraa_init();
 
 	// pkt rx trigger
-		gpio = mraa_gpio_init(IOPIN);
+	gpio = mraa_gpio_init(IOPIN);
 	if (gpio == NULL) {
 		fprintf(stderr, "Error in using pin%d, NO GPIO no TEST ", IOPIN);
 		exit(1);
@@ -136,7 +147,7 @@ int main() {
 		exit(1);
 	}
 
-	printf("init-ed pin%d\n", IOPIN);
+	printf("init-ed pin%d and pin%d\n", IOPIN, TRGPIN);
 
 	// register interrupt for tx gpio
     ret = mraa_gpio_isr(timePin, MRAA_GPIO_EDGE_RISING, &tx_interrupt, NULL);
@@ -180,7 +191,7 @@ int main() {
 	}
 	sleep(1);
 
-	printf("\n Let start rx .... \n");
+	printf("\n Ready for rx .... \n");
 
 	while (running == 0) {
 
@@ -216,16 +227,19 @@ int main() {
 			pktnobuf = (uint8_t *) (pktbuf + 96); // 96 ->> magic location
 			memcpy(&rx_pktno, pktnobuf, sizeof(uint8_t));
 
+#ifdef DEBUG
 			// Get pkt length
 			pktlength = packet_header.len;
 			printf("Lenght  of packet no tx : %d rx : %d - %d\n",
 					tx_pktno, rx_pktno, pktlength);
+#endif
 
 			// TODO : extract time stamp
 
-			if(tx_pktno == packno || rx_pktno == packno) {
+			if(rx_pktno != packno) {
 				printf("Packet is missing tx :%d rx :%d counted pkt no :%d\n",
 						tx_pktno, rx_pktno, packno);
+				packno = rx_pktno;
 			}
 
 			// Calculate tx->rx time
@@ -236,14 +250,18 @@ int main() {
 					delayInSec = (end_time.tv_sec - tx_time.tv_sec);
 					delayInNanos = (end_time.tv_nsec - tx_time.tv_nsec);
 				} else {
-					// Something wrong
+					// Something wrong, we are not considering this
 					delayInSec = 9999;
 					delayInNanos = 9999;
 				}
 			} else if (tx_pktno == 0 || tx_pktno < rx_pktno) {
 				printf("Tx GPIO interrupt is not received \n");
+				if (tx_pktno < rx_pktno) {
+					tx_pktno = rx_pktno;
+				}
 			}
 
+#ifdef DEBUG
 			// Calculate wait time <-- can be used to calculate linux stack delay
 			if (end_time.tv_nsec >= start_time.tv_nsec
 					&& end_time.tv_sec >= start_time.tv_sec) {
@@ -262,7 +280,6 @@ int main() {
 				diffInNanos = 9999;
 			}
 
-
 			// Times
 			if(tx_pktno == rx_pktno) {
 				printf("Got a packet [%d] at %ld.%09ld sec"
@@ -279,6 +296,17 @@ int main() {
 
 			// Dump the packet
 			pktdump(packet, pktlength);
+#else
+			// Times
+			if(tx_pktno == rx_pktno) {
+				printf("[%d] @ %ld.%09ld : %ld.%09ld \n",
+						rx_pktno, end_time.tv_sec, end_time.tv_nsec,
+						delayInSec, delayInNanos);
+			} else {
+				printf("[%d] @ %ld.%09ld : 9999999999.9999999999\n",
+						rx_pktno, end_time.tv_sec, end_time.tv_nsec);
+			}
+#endif
 
 			// Check for max number of pkts
 			if (packno >= max_packno || tx_pktno >= max_packno || rx_pktno >= max_packno) {
@@ -313,6 +341,7 @@ int main() {
 	return ret;
 }
 
+#ifdef DEBUG
 // packet dump
 void pktdump(const u_char * pu8, int nLength) {
 	char sz[256], szBuf[512], szChar[17], *buf;
@@ -369,4 +398,4 @@ void pktdump(const u_char * pu8, int nLength) {
 	buf += sprintf(buf, "%s\n", szChar);
 	printf("%s", szBuf);
 }
-
+#endif
