@@ -101,7 +101,7 @@ int main() {
 	char error_buffer[PCAP_ERRBUF_SIZE];
 	struct bpf_program filter;
 	char filter_exp[] =
-			"udp && src 169.254.1.1 && dst 255.255.255.255 && src port 50505 && dst port 50505";
+			"udp && src 192.168.1.1 && dst 255.255.255.255 && src port 50505 && dst port 50505";
 	bpf_u_int32 netmask=0xffffff;
 
 #ifdef DEBUG
