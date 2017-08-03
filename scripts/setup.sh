@@ -3,68 +3,119 @@
 # exit var
 int_found=0
 
-# config var
-NAME="mon0"
-CH="1"
-BAND="HT40+"
-BITR="mcs-5 4"
-
 # Is there any wireless interface
-for WINT in $(iwconfig 2> /dev/null | grep "IEEE 802.11bgn" | cut -d" " -f1)
-do
-	is_Monitor=$(iwconfig $WINT 2>/dev/null | grep "IEEE 802.11bgn  Mode" | cut -d":" -f2 | cut -d" " -f1)
-	if [ "$WINT" == "$NAME" ] && [ "$is_Monitor" == "Monitor" ]
-	then
-		echo "Interface $NAME is created already as $is_Monitor ..."
-		int_found=1
-	else
-		echo "Found $WINT as $is_Monitor and removing it ..."
-		iw dev $WINT del
-	fi
-done	
+function check_interface()
+{
+	for WINT in $(iwconfig 2> /dev/null | grep "IEEE 802.11bgn" | cut -d" " -f1)
+	do
+		is_Monitor=$(iwconfig $WINT 2>/dev/null | grep "IEEE 802.11bgn  Mode" | cut -d":" -f2 | cut -d" " -f1)
+		if [ "$WINT" == "$NAME" ] && [ "$is_Monitor" == "Monitor" ]
+		then
+			echo "Interface $NAME is created already as $is_Monitor ..."
+			int_found=1
+		else
+			echo "Found $WINT as $is_Monitor and removing it ..."
+			iw dev $WINT del
+		fi
+	done
+}
 
 # Lets find phy interface
-WPHY=$(iw list 2> /dev/null | grep "Wiphy" | cut -d" " -f2)
-echo "Phy : $WPHY"
+function find_phy()
+{
+	WPHY=$(iw list 2> /dev/null | grep "Wiphy" | cut -d" " -f2)
+	echo "Phy : $WPHY"
+}
 
 # Lets find interface number
-WNUM=$(rfkill list 2> /dev/null | grep "$WPHY" | cut -d":" -f1)
-echo "Phy num : $WNUM"
+function find_phy_no()
+{
+	WNUM=$(rfkill list 2> /dev/null | grep "$WPHY" | cut -d":" -f1)
+	echo "Phy num : $WNUM"
+}
 
 # Lets unblock it
-rfkill unblock $WNUM
+function unblock_phy()
+{
+	rfkill unblock $WNUM
+}
 
-if [ $int_found -ne 1 ]
-then
-	# Lets crate intefcae
-	iw phy $WPHY interface add $NAME type monitor flags active
-else
-	# Lets set the flag
-	iw dev $NAME set monitor active
-fi
+function create_int()
+{
+	if [ $int_found -ne 1 ]
+	then
+		# Lets crate intefcae
+		iw phy $WPHY interface add $NAME type monitor flags active
+	else
+		# Lets set the flag
+		iw dev $NAME set monitor active
+	fi
+}
 
 # Bring it up
-ip link set dev $NAME up
+function up_int()
+{
+	ip link set dev $NAME up
+}
 
 # Set channel
-iw dev $NAME set channel $CH
+function set_channel()
+{
+	iw dev $NAME set channel $CH
 
-# Set channel with band
-#iw dev $NAME set channel $CH $BAND
+	# Set channel with band
+	if [ ! -z $BAND ]
+	then
+		iw dev $NAME set channel $CH $BAND
+	fi
+}
 
 # Set bitrate
-#iw dev $NAME set bitrates $BITR
+function set_bitrate()
+{
+	if [ ! -z $BITR ]
+	then
+		iw dev $NAME set bitrates $BITR
+	fi
+}
 
 # Check is it all ok
-WINT=$(iwconfig 2> /dev/null | grep "IEEE 802.11bgn" | cut -d" " -f1)
-is_Monitor=$(iwconfig $NAME 2>/dev/null | grep "IEEE 802.11bgn  Mode" | cut -d":" -f2 | cut -d" " -f1)
+function is_inter_ok()
+{
+	WINT=$(iwconfig 2> /dev/null | grep "IEEE 802.11bgn" | cut -d" " -f1)
+	is_Monitor=$(iwconfig $NAME 2>/dev/null | grep "IEEE 802.11bgn  Mode" | cut -d":" -f2 | cut -d" " -f1)
 
-if [ "$WINT" == "$NAME" ] && [ "$is_Monitor" == "Monitor" ]
+	if [ "$WINT" == "$NAME" ] && [ "$is_Monitor" == "Monitor" ]
+	then
+		echo "Interface $NAME created ..."
+	else
+		echo "Somthing wrong ..."
+		exit 1
+	fi
+}
+
+function setup_int()
+{
+	check_interface
+	find_phy
+	find_phy_no
+	unblock_phy
+	create_int
+	up_int
+	set_channel
+	set_bitrate
+	is_inter_ok
+}
+
+if [ -z "$1" ]
 then
-	echo "Interface $NAME created ..."
+        echo "init setup ..."
+elif [ "${0##*/}" == "setup.sh" ]
+then
+	echo "Run setup ..."
+	setup_int	
 else
-	echo "Somthing wrong ..."
-	exit 1
+        echo "Somthing gone wrong ..."
 fi
 
 exit 0

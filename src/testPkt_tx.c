@@ -26,7 +26,7 @@
 //
 
 //debug
-#define DEBUG 1
+//#define DEBUG 1
 
 // IEEE 802.11 Types <-- only data type required
 #define WLAN_FC_TYPE_DATA	2
