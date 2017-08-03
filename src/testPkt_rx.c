@@ -199,9 +199,6 @@ int main() {
 			printf("No packet found.\n");
 		} else {
 
-			// Next pkt
-			++packno;
-
 			// Packet receive time
 			clock_gettime(CLOCK_REALTIME, &end_time);
 
@@ -211,19 +208,34 @@ int main() {
 				mraa_result_print(ret);
 			}
 
-			if(tx_pktno == packno) {
+			// Next pkt
+			++packno;
 
-				// Calculate tx->rx time
+			// pkt number from data
+			pktbuf = (uint8_t *) packet;
+			pktnobuf = (uint8_t *) (pktbuf + 96); // 96 ->> magic location
+			memcpy(&rx_pktno, pktnobuf, sizeof(uint8_t));
+
+			// Get pkt length
+			pktlength = packet_header.len;
+			printf("Lenght  of packet no tx : %d rx : %d - %d\n",
+					rx_pktno, packno, pktlength);
+
+			// TODO : extract time stamp
+
+			// Calculate tx->rx time
+			if(tx_pktno == rx_pktno) {
+				// The packet should receive less than a second
 				if (end_time.tv_nsec >= tx_time.tv_nsec
-						&& end_time.tv_sec >= tx_time.tv_sec) {
+						&& end_time.tv_sec == tx_time.tv_sec) {
 					delayInSec = (end_time.tv_sec - tx_time.tv_sec);
 					delayInNanos = (end_time.tv_nsec - tx_time.tv_nsec);
 				} else {
 					// Something wrong
-					diffInSec = 99999;
-					diffInNanos = 0;
+					delayInSec = 9999;
+					delayInNanos = 9999;
 				}
-			} else if (tx_pktno == 0) {
+			} else if (tx_pktno == 0 || tx_pktno < rx_pktno) {
 				printf("Tx GPIO interrupt is not received \n");
 			} else {
 				printf("Packet is missing tx :%d rx :%d\n", tx_pktno, packno);
@@ -243,24 +255,13 @@ int main() {
 
 			} else {
 				// 1 sec ... something wrong
-				diffInSec = 1;
-				diffInNanos = 0;
+				diffInSec = 9999;
+				diffInNanos = 9999;
 			}
 
-			// pkt number from data
-			pktbuf = (uint8_t *) packet;
-			pktnobuf = (uint8_t *) (pktbuf + 96); // 96 ->> magic location
-			memcpy(&rx_pktno, pktnobuf, sizeof(uint8_t));
-
-			// Get pkt length
-			pktlength = packet_header.len;
-			printf("Lenght  of packet no tx : %d rx : %d - %d\n",
-					rx_pktno, packno, pktlength);
-
-			// TODO : extract time stamp
 
 			// Times
-			if(tx_pktno == packno) {
+			if(tx_pktno == rx_pktno) {
 				printf("Got a packet [%d] at %ld.%09ld sec"
 						"(waiting %ld.%09ld sec) "
 						"tx->rx : %ld.%09ld sec\n",
