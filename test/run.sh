@@ -12,7 +12,7 @@ then
 	. setup.sh
 	setup_int
 else
-	echo "Unable to find setup scipt, exit ..."
+	echo "Unable to find setup script, exit ..."
 	exit 1
 fi
 

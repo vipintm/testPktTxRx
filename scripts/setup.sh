@@ -118,4 +118,3 @@ else
         echo "Somthing gone wrong ..."
 fi
 
-exit 0
