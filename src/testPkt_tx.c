@@ -26,7 +26,7 @@
 //
 
 //debug
-//#define DEBUG 1
+#define DEBUG 1
 
 // IEEE 802.11 Types <-- only data type required
 #define WLAN_FC_TYPE_DATA	2
@@ -37,8 +37,8 @@
 #define nDelay  1000000 // 1000000 <- this is too much
 #define IOPIN 8 // using gpio pin 40 (IO08)
 #define TRGPIN 9 // using gpio pin ?? (IO09)
-#define DATA_SZ 100 // Just filling data
-#define STRING_SZ (DATA_SZ - 10)
+#define DATA_SZ 200 // Just filling data
+#define STRING_SZ (DATA_SZ - 20)
 
 /* Defined in include/linux/ieee80211.h */
 struct ieee80211_hdr {
@@ -67,11 +67,11 @@ struct ieee80211_hdr_qos {
 uint16_t inet_csum(const void *buf, size_t hdr_len);
 
 // MAC address
-const uint8_t mac[6] = { 0x01, 0x23, 0x45, 0x67, 0x89, 0xab };
+const uint8_t mac[6] = { 0x11, 0x22, 0x33, 0x44, 0x55, 0x66 };
 
 // IP address
 const char * to = "255.255.255.255";
-const char * from = "169.254.1.1";
+const char * from = "192.168.1.1";
 
 // Radiotap include/net/ieee80211_radiotap.h
 static const uint8_t u8aRadiotapHeader[] = { 0x00, 0x00, 0x18, 0x00, 0x0f, 0x80,
@@ -88,7 +88,7 @@ int max_packno = 100;
 // Let close by CTL+C
 void sig_handler(int signo) {
     if (signo == SIGINT) {
-        printf("Stopping pkt tx and shutdown IO%d \n", IOPIN);
+        printf("Stopping pkt tx and shutdown IO%d and IO%d\n", IOPIN, TRGPIN);
         running = -1;
     }
 }
@@ -102,6 +102,7 @@ int main(void) {
 	struct timespec send_time;
 	struct timespec start_time;
 	struct timespec end_time;
+
 #ifdef DEBUG
 	long int diffInNanos;
 	long int diffSec;
@@ -408,9 +409,6 @@ int main(void) {
 
 	printf("\n Let finish ....\n");
 
-	// close pcap
-	pcap_close(ppcap);
-
 	// make sure gpio is low
 	ret = mraa_gpio_write(gpio, 0);
 	if (ret != MRAA_SUCCESS) {
@@ -432,6 +430,9 @@ int main(void) {
 	if (ret != MRAA_SUCCESS) {
 		mraa_result_print(ret);
 	}
+
+	// close pcap
+	pcap_close(ppcap);
 
 	return ret;
 }

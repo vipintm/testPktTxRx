@@ -27,7 +27,7 @@
 //
 
 //debug
-//#define DEBUG 1
+#define DEBUG 1
 
 #ifdef DEBUG
 // dump pkt
@@ -317,9 +317,6 @@ int main() {
 
 	printf("\n Let finish ....\n");
 
-	// close pcap
-	pcap_close(handle);
-
 	// make sure gpio is low
 	ret = mraa_gpio_write(gpio, 0);
 	if (ret != MRAA_SUCCESS) {
@@ -337,6 +334,9 @@ int main() {
 	if (ret != MRAA_SUCCESS) {
 		mraa_result_print(ret);
 	}
+
+	// close pcap
+	pcap_close(handle);
 
 	return ret;
 }
