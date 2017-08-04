@@ -79,6 +79,17 @@ function set_bitrate()
 	fi
 }
 
+# Set power
+function set_power()
+{
+	if [ "$POWER" == "max" ]
+	then
+		iw dev $NAME set txpower fixed 20mBm
+	else
+		iw dev $NAME set txpower fixed $POWER
+	fi
+} 
+
 # Check is it all ok
 function is_inter_ok()
 {
@@ -104,6 +115,8 @@ function setup_int()
 	up_int
 	set_channel
 	set_bitrate
+	set_power
+	# at last
 	is_inter_ok
 }
 

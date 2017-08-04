@@ -87,9 +87,10 @@ int main() {
 #ifdef DEBUG
 	long int diffInNanos;
 	long int diffInSec;
+	long int delayInSec;
 #endif
 	long int delayInNanos;
-	long int delayInSec;
+	long double delayInMs;
 
 	// frame count info
 	uint8_t packno = 0;
@@ -219,7 +220,7 @@ int main() {
 				mraa_result_print(ret);
 			}
 
-			// Next pkt
+			// got a pkt
 			++packno;
 
 			// pkt number from data
@@ -234,7 +235,7 @@ int main() {
 					tx_pktno, rx_pktno, pktlength);
 #endif
 
-			// TODO : extract time stamp
+			// TODO : extract time stamp <-- No use at this time
 
 			if(rx_pktno != packno) {
 				printf("Packet is missing tx :%d rx :%d counted pkt no :%d\n",
@@ -247,12 +248,12 @@ int main() {
 				// The packet should receive less than a second
 				if (end_time.tv_nsec >= tx_time.tv_nsec
 						&& end_time.tv_sec == tx_time.tv_sec) {
-					delayInSec = (end_time.tv_sec - tx_time.tv_sec);
 					delayInNanos = (end_time.tv_nsec - tx_time.tv_nsec);
+					delayInMs = delayInNanos / MSTONANOS ;
 				} else {
 					// Something wrong, we are not considering this
-					delayInSec = 9999;
 					delayInNanos = 9999;
+					delayInMs = 9999;
 				}
 			} else if (tx_pktno == 0 || tx_pktno < rx_pktno) {
 				printf("Tx GPIO interrupt is not received \n");
@@ -299,11 +300,11 @@ int main() {
 #else
 			// Times
 			if(tx_pktno == rx_pktno) {
-				printf("[%d] @ %ld.%09ld : %ld.%09ld \n",
-						rx_pktno, end_time.tv_sec, end_time.tv_nsec,
-						delayInSec, delayInNanos);
+				printf("[%d] @ %ld.%09ld "
+					//": %ld \n", rx_pktno, end_time.tv_sec, end_time.tv_nsec, delayInNanos);
+					": %Lf \n", rx_pktno, end_time.tv_sec, end_time.tv_nsec, delayInMs);
 			} else {
-				printf("[%d] @ %ld.%09ld : 9999999999.9999999999\n",
+				printf("[%d] @ %ld.%09ld : Error\n",
 						rx_pktno, end_time.tv_sec, end_time.tv_nsec);
 			}
 #endif
