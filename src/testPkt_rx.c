@@ -249,7 +249,7 @@ int main() {
 				if (end_time.tv_nsec >= tx_time.tv_nsec
 						&& end_time.tv_sec == tx_time.tv_sec) {
 					delayInNanos = (end_time.tv_nsec - tx_time.tv_nsec);
-					delayInMs = delayInNanos / MSTONANOS ;
+					delayInMs = (float) delayInNanos / (float) MSTONANOS ;
 				} else {
 					// Something wrong, we are not considering this
 					delayInNanos = 9999;
