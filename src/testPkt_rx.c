@@ -238,8 +238,8 @@ int main() {
 			// TODO : extract time stamp <-- No use at this time
 
 			if(rx_pktno != packno) {
-				printf("Packet is missing tx :%d rx :%d counted pkt no :%d\n",
-						tx_pktno, rx_pktno, packno);
+				printf("Packet %d is missing current tx :%d & rx :%d\n",
+						packno, tx_pktno, rx_pktno);
 				packno = rx_pktno;
 			}
 
@@ -253,7 +253,7 @@ int main() {
 				} else {
 					// Something wrong, we are not considering this
 					delayInNanos = 9999;
-					delayInMs = 9999;
+					delayInMs = 9999.0000;
 				}
 			} else if (tx_pktno == 0 || tx_pktno < rx_pktno) {
 				printf("Tx GPIO interrupt is not received \n");
@@ -283,13 +283,13 @@ int main() {
 
 			// Times
 			if(tx_pktno == rx_pktno) {
-				printf("Got a packet [%d] at %ld.%09ld sec"
+				printf("Got a packet [%03d] at %ld.%09ld sec"
 						"(waiting %ld.%09ld sec) "
 						"tx->rx : %ld.%09ld sec\n",
 						rx_pktno, end_time.tv_sec, end_time.tv_nsec,
 						diffInSec, diffInNanos, delayInSec, delayInNanos);
 			} else {
-				printf("Got a packet [%d] at %ld.%09ld sec"
+				printf("Got a packet [%03d] at %ld.%09ld sec"
 						"(waiting %ld.%09ld sec)\n",
 						rx_pktno, end_time.tv_sec, end_time.tv_nsec,
 						diffInSec, diffInNanos);
@@ -300,11 +300,13 @@ int main() {
 #else
 			// Times
 			if(tx_pktno == rx_pktno) {
-				printf("[%d] @ %ld.%09ld "
-					//": %ld \n", rx_pktno, end_time.tv_sec, end_time.tv_nsec, delayInNanos);
-					": %3.7f \n", rx_pktno, end_time.tv_sec, end_time.tv_nsec, delayInMs);
+				printf("[%03d] @ %ld.%09ld "
+					//"tx->rx : %ld \n",
+					//	rx_pktno, end_time.tv_sec, end_time.tv_nsec, delayInNanos);
+					"tx->rx :%03.7f ms\n",
+					rx_pktno, end_time.tv_sec, end_time.tv_nsec, delayInMs);
 			} else {
-				printf("[%d] @ %ld.%09ld : Error\n",
+				printf("[%03d] @ %ld.%09ld tx->rx :NaNa\n",
 						rx_pktno, end_time.tv_sec, end_time.tv_nsec);
 			}
 #endif
