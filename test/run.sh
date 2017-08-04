@@ -25,7 +25,7 @@ echo "Let start test ..."
 if [ -f $SPATH/$1 ]
 then
 	chmod 755 $SPATH/$1
-	.$SPATH/$1
+	$SPATH/$1
 elif [ -f build/$1 ]
 then
 	chmod 755 build/$1
