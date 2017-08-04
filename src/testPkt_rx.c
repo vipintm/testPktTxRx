@@ -307,7 +307,7 @@ int main() {
 				printf("[%03d] @ %ld.%09ld "
 					//"tx->rx : %ld \n",
 					//	rx_pktno, end_time.tv_sec, end_time.tv_nsec, delayInNanos);
-					"tx->rx :%03.07f ms\n",
+					"tx->rx :%03.7f ms\n",
 					rx_pktno, end_time.tv_sec, end_time.tv_nsec, delayInMs);
 			} else {
 				printf("[%03d] @ %ld.%09ld tx->rx :NaNa\n",

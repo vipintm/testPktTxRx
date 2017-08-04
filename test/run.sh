@@ -13,9 +13,10 @@ if [ -f $SPATH/setup.sh ]
 then
 	. $SPATH/setup.sh
 	setup_int
-elif [ -f script/setup.sh ]
+elif [ -f scripts/setup.sh ]
 then
-	. script/setup.sh
+	. scripts/setup.sh
+	setup_int
 else
 	echo "Unable to find setup script, exit ..."
 	exit 1
