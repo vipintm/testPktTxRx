@@ -238,8 +238,12 @@ int main() {
 			// TODO : extract time stamp <-- No use at this time
 
 			if(rx_pktno != packno) {
-				printf("Packet %d is missing current tx :%d & rx :%d\n",
+#ifdef DEBUG
+				printf("[%03d] @Lost current tx :%d & rx :%d\n",
 						packno, tx_pktno, rx_pktno);
+#else
+				printf("[%03d] @Lost\n", packno);
+#endif
 				packno = rx_pktno;
 			}
 
@@ -303,7 +307,7 @@ int main() {
 				printf("[%03d] @ %ld.%09ld "
 					//"tx->rx : %ld \n",
 					//	rx_pktno, end_time.tv_sec, end_time.tv_nsec, delayInNanos);
-					"tx->rx :%03.7f ms\n",
+					"tx->rx :%03.07f ms\n",
 					rx_pktno, end_time.tv_sec, end_time.tv_nsec, delayInMs);
 			} else {
 				printf("[%03d] @ %ld.%09ld tx->rx :NaNa\n",
