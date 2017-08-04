@@ -90,7 +90,7 @@ int main() {
 	long int delayInSec;
 #endif
 	long int delayInNanos;
-	long float delayInMs;
+	float delayInMs;
 
 	// frame count info
 	uint8_t packno = 0;
@@ -302,7 +302,7 @@ int main() {
 			if(tx_pktno == rx_pktno) {
 				printf("[%d] @ %ld.%09ld "
 					//": %ld \n", rx_pktno, end_time.tv_sec, end_time.tv_nsec, delayInNanos);
-					": %lf \n", rx_pktno, end_time.tv_sec, end_time.tv_nsec, delayInMs);
+					": %3.7f \n", rx_pktno, end_time.tv_sec, end_time.tv_nsec, delayInMs);
 			} else {
 				printf("[%d] @ %ld.%09ld : Error\n",
 						rx_pktno, end_time.tv_sec, end_time.tv_nsec);
