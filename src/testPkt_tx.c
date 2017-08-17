@@ -88,7 +88,6 @@ const uint8_t ipllc[8] = { 0xaa, 0xaa, 0x03, 0x00, 0x00, 0x00, 0x08, 0x00 };
 
 // exit vars
 sig_atomic_t running = 0;
-uint8_t max_packno = TEST_PER;
 
 /* PCAP vars */
 char errbuf[PCAP_ERRBUF_SIZE];
@@ -159,7 +158,7 @@ int run_test(uint8_t pkt_sz) {
 
 	printf("Starting tx for pkt size : %d\n",pkt_sz);
 
-	while (running == 0 || packno <= max_packno ) {
+	while (running == 0 && packno <= TEST_PER ) {
 
 		// Make sure GPIO is low
 	    ret = mraa_gpio_write(gpio, 0);
@@ -452,7 +451,7 @@ int main(void) {
 	printf("\n Let start tx .... \n");
 
     // run test for pack step
-	while( test_loop <= (DATA_MAX / DATA_SZ) || running == 0) {
+	while( test_loop <= (DATA_MAX / DATA_SZ) && running == 0) {
 		test_pkt_sz = DATA_SZ * test_loop;
 		ret=run_test(test_pkt_sz);
 		test_loop++;
