@@ -89,7 +89,7 @@ const uint8_t ipllc[8] = { 0xaa, 0xaa, 0x03, 0x00, 0x00, 0x00, 0x08, 0x00 };
 // exit vars
 sig_atomic_t running = 0;
 sig_atomic_t test_loop = 0;
-int max_packno = TEST_PER;
+uint8_t max_packno = TEST_PER;
 
 /* PCAP vars */
 char errbuf[PCAP_ERRBUF_SIZE];
@@ -110,7 +110,7 @@ void sig_handler(int signo) {
 
 
 // Let run the test for the size
-int run_test(int pkt_sz) {
+int run_test(uint8_t pkt_sz) {
 
 	// VARS
 
@@ -159,7 +159,7 @@ int run_test(int pkt_sz) {
 	// GPIO mraa
 	mraa_result_t ret = MRAA_SUCCESS;
 
-	printf("Starting tx for pkt size : %d",pkt_sz);
+	printf("Starting tx for pkt size : %d\n",pkt_sz);
 
 	while (running == 0) {
 
@@ -288,7 +288,7 @@ int run_test(int pkt_sz) {
 		memcpy(packet_no, &packno, sizeof(uint8_t));
 
 		// DATA packet size
-		memcpy(packt_sz, &pkt_sz, sizeof(int));
+		memcpy(packt_sz, &pkt_sz, sizeof(uint8_t));
 
 		// Get the epoch time
 		clock_gettime(CLOCK_REALTIME, &send_time);
@@ -393,7 +393,7 @@ int run_test(int pkt_sz) {
 int main(void) {
 
 	// VARS
-	int test_pkt_sz;
+	uint8_t test_pkt_sz;
 
 	// GPIO mraa
 	mraa_result_t ret = MRAA_SUCCESS;
