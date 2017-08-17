@@ -88,7 +88,6 @@ const uint8_t ipllc[8] = { 0xaa, 0xaa, 0x03, 0x00, 0x00, 0x00, 0x08, 0x00 };
 
 // exit vars
 sig_atomic_t running = 0;
-sig_atomic_t test_loop = 0;
 uint8_t max_packno = TEST_PER;
 
 /* PCAP vars */
@@ -104,7 +103,6 @@ void sig_handler(int signo) {
     if (signo == SIGINT) {
         printf("Stopping pkt tx and shutdown IO%d and IO%d\n", IOPIN, TRGPIN);
         running = -1;
-        test_loop = -1;
     }
 }
 
@@ -161,7 +159,7 @@ int run_test(uint8_t pkt_sz) {
 
 	printf("Starting tx for pkt size : %d\n",pkt_sz);
 
-	while (running == 0) {
+	while (running == 0 || packno <= max_packno ) {
 
 		// Make sure GPIO is low
 	    ret = mraa_gpio_write(gpio, 0);
@@ -379,10 +377,6 @@ int run_test(uint8_t pkt_sz) {
 		if (nDelay)
 			usleep(nDelay);
 
-		// stop if reached max no + 1
-		if (packno >= max_packno) {
-			running = -1;
-		}
 		// one more packet send
 		packno++;
 	}
@@ -399,7 +393,7 @@ int main(void) {
 	mraa_result_t ret = MRAA_SUCCESS;
 
 	// init
-	test_loop = DATA_MAX / DATA_SZ ;
+	uint8_t test_loop = 1 ;
 
 	// EXEC
 
@@ -458,10 +452,10 @@ int main(void) {
 	printf("\n Let start tx .... \n");
 
     // run test for pack step
-	while(test_loop > 0) {
+	while( test_loop <= (DATA_MAX / DATA_SZ) || running == 0) {
 		test_pkt_sz = DATA_SZ * test_loop;
 		ret=run_test(test_pkt_sz);
-		test_loop--;
+		test_loop++;
 	}
 
 
