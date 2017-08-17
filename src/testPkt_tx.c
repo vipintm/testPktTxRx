@@ -25,8 +25,17 @@
 #include <pcap.h>
 //
 
+// Config
+#define IOPIN 8 // using gpio pin 40 (IO08)
+#define TRGPIN 9 // using gpio pin ?? (IO09)
+#define DATA_SZ 32 // (old : 200) first test data
+#define DATA_STEP 32 // data size to increse
+#define DATA_MAX 512 // Maximum size of data
+#define TEST_PER 10 // No of test to run on same data size
+
 //debug
 //#define DEBUG 1
+//#define STRIG_DATA 1
 
 // IEEE 802.11 Types <-- only data type required
 #define WLAN_FC_TYPE_DATA	2
@@ -35,10 +44,6 @@
 // Constants
 #define BILLION  1000000000L // <- nano
 #define nDelay  1000000 // 1000000 <- this is too much
-#define IOPIN 8 // using gpio pin 40 (IO08)
-#define TRGPIN 9 // using gpio pin ?? (IO09)
-#define DATA_SZ 200 // Just filling data
-#define STRING_SZ (DATA_SZ - 20)
 
 /* Defined in include/linux/ieee80211.h */
 struct ieee80211_hdr {
@@ -83,24 +88,37 @@ const uint8_t ipllc[8] = { 0xaa, 0xaa, 0x03, 0x00, 0x00, 0x00, 0x08, 0x00 };
 
 // exit vars
 sig_atomic_t running = 0;
-int max_packno = 100;
+sig_atomic_t test_loop = 0;
+int max_packno = TEST_PER;
+
+/* PCAP vars */
+char errbuf[PCAP_ERRBUF_SIZE];
+pcap_t *ppcap;
+
+// GPIO mraa
+mraa_gpio_context gpio;
+mraa_gpio_context timePin;
 
 // Let close by CTL+C
 void sig_handler(int signo) {
     if (signo == SIGINT) {
         printf("Stopping pkt tx and shutdown IO%d and IO%d\n", IOPIN, TRGPIN);
         running = -1;
+        test_loop = -1;
     }
 }
 
-//
-int main(void) {
+
+// Let run the test for the size
+int run_test(int pkt_sz) {
 
 	// VARS
 
 	// Time measure vars
 	struct timespec send_time;
+#ifdef DEBUG
 	struct timespec start_time;
+#endif
 	struct timespec end_time;
 
 #ifdef DEBUG
@@ -111,8 +129,11 @@ int main(void) {
 	// frame count info
 	uint8_t packno = 1;
 
-	// frame buff
-	char buff[STRING_SZ];
+#ifdef STRIG_DATA
+	// Useless info frame buff
+	size_t string_sz;
+	char *buff;
+#endif
 
 	// Frame hdr
 	uint8_t *rt; /* radiotap */
@@ -122,9 +143,12 @@ int main(void) {
 	struct udphdr *udp;
 
 	// frame data parts
-	uint8_t *data;
+	uint8_t *packet_no;
+	uint8_t *packt_sz;
 	struct timespec *ntime;
+#ifdef STRIG_DATA
 	uint8_t *stime;
+#endif
 
 	/* Other useful bits */
 	uint8_t *buf;
@@ -132,70 +156,11 @@ int main(void) {
 	uint8_t fcchunk[2]; /* 802.11 header frame control */
 	struct sockaddr_in saddr, daddr; /* IP source and destination */
 
-	/* PCAP vars */
-	char errbuf[PCAP_ERRBUF_SIZE];
-	pcap_t *ppcap;
-
 	// GPIO mraa
 	mraa_result_t ret = MRAA_SUCCESS;
-	mraa_gpio_context gpio;
-	mraa_gpio_context timePin;
 
-	// EXEC
+	printf("Starting tx for pkt size : %d",pkt_sz);
 
-	// initilize GPIO LED / ext trigger
-	mraa_init();
-	gpio = mraa_gpio_init(IOPIN);
-	if (gpio == NULL) {
-		fprintf(stderr, "Error in using pin%d, NO GPIO no TEST ", IOPIN);
-		exit(1);
-	}
-
-	// initilize GPIO trigger for rx board
-	timePin = mraa_gpio_init(TRGPIN);
-	if (timePin == NULL) {
-		fprintf(stderr, "Error in using pin%d, NO GPIO no TEST ", TRGPIN);
-		exit(1);
-	}
-
-	// set direction to OUT
-	ret = mraa_gpio_dir(gpio, MRAA_GPIO_OUT);
-	if (ret != MRAA_SUCCESS) {
-		mraa_result_print(ret);
-	}
-
-	ret = mraa_gpio_dir(timePin, MRAA_GPIO_OUT);
-	if (ret != MRAA_SUCCESS) {
-		mraa_result_print(ret);
-	}
-
-	printf("init-ed pin%d\n", IOPIN);
-
-	// registor signal fuc
-	signal(SIGINT, sig_handler);
-
-	// open interface mon0
-	ppcap = pcap_open_live("mon0", 800, 1, 20, errbuf);
-
-	if (ppcap == NULL) {
-		fprintf(stderr,"Could not open interface mon0 for packet injection: %s",
-				errbuf);
-		exit(1);
-	}
-
-	printf("\n Test GPIO .... \n");
-	ret = mraa_gpio_write(gpio, 0);
-	if (ret != MRAA_SUCCESS) {
-		mraa_result_print(ret);
-	}
-	sleep(1);
-	ret = mraa_gpio_write(gpio, 1);
-	if (ret != MRAA_SUCCESS) {
-		mraa_result_print(ret);
-	}
-	sleep(1);
-
-	printf("\n Let start tx .... \n");
 	while (running == 0) {
 
 		// Make sure GPIO is low
@@ -209,27 +174,37 @@ int main(void) {
 	        mraa_result_print(ret);
 	    }
 
+#ifdef STRIG_DATA
+		// string buffer
+		string_sz = pkt_sz - (sizeof(packt_sz)+sizeof(packet_no)+sizeof(struct timespec));
+		if(string_sz <= 0) {
+			fprintf(stderr, "Packet size is less than minimum required");
+			exit(1);
+		}
+		buff = (char *) malloc(string_sz);
+#endif
+
 		// Total buffer size
 		sz = sizeof(u8aRadiotapHeader) + sizeof(struct ieee80211_hdr)
 				+ sizeof(ipllc) + sizeof(struct iphdr) + sizeof(struct udphdr)
-				+ /*0*/sizeof(uint8_t) + sizeof(struct timespec) + DATA_SZ /* data */
+				+ /*0*/sizeof(uint8_t) + sizeof(struct timespec) + pkt_sz /* data */
 				+ 4 /* FCS */;
 
 		// pkt buffer
 		buf = (uint8_t *) malloc(sz);
 
-		// for string time in packet
-		memset(&buff[0], 0, sizeof(buff));
-
-		// pointers maping
+		// pointers mapping
 		rt = (uint8_t *) buf;
 		hdr = (struct ieee80211_hdr *) (rt + sizeof(u8aRadiotapHeader)); // dot11 hdr - TODO change to qos
 		llc = (uint8_t *) (hdr + 1); // llc
 		ip = (struct iphdr *) (llc + sizeof(ipllc)); // ip hdr
 		udp = (struct udphdr *) (ip + 1); // udp hdr
-		data = (uint8_t *) (udp + 1); // packet number
-		ntime = (struct timespec *) (data + 1); // Epoch time
+		packet_no = (uint8_t *) (udp + 1); // packet number
+		packt_sz = (uint8_t *) (packet_no + 1); // packet number
+		ntime = (struct timespec *) (packt_sz + 1); // Epoch time
+#ifdef STRIG_DATA
 		stime = (uint8_t *) (ntime + 1); // Date and Time in string
+#endif
 
 		// The radiotap header
 		memcpy(rt, u8aRadiotapHeader, sizeof(u8aRadiotapHeader));
@@ -273,7 +248,7 @@ int main(void) {
 		// IP version
 		ip->version = 4;
 
-		// IP TOS --- TODO
+		// IP TOS --- TODO -- this should match to ieee hdr value
 		// https://www.tucny.com/Home/dscp-tos
 		// http://www.cisco.com/c/en/us/products/collateral/switches/catalyst-3750-series-switches/prod_bulletin0900aecd80394844.html
 		//ip->tos = 0xb8;
@@ -288,8 +263,7 @@ int main(void) {
 		ip->ttl = 64;
 
 		// IP totel lenghth
-		ip->tot_len = htons(
-				sizeof(struct iphdr) + sizeof(struct udphdr) + DATA_SZ /* data */);
+		ip->tot_len = htons(sizeof(struct iphdr) + sizeof(struct udphdr) + pkt_sz /* data */);
 
 		// UDP
 		ip->protocol = IPPROTO_UDP;
@@ -305,18 +279,16 @@ int main(void) {
 		udp->dest = daddr.sin_port;
 
 		// UDP length
-		udp->len = htons(sizeof(struct udphdr) + DATA_SZ /* data */);
+		udp->len = htons(sizeof(struct udphdr) + pkt_sz /* data */);
 
 		// UPD check sum
 		udp->check = 0;
 
 		// DATA packet number
-		// We send max_packno + 1
-		if (packno > max_packno) {
-			memcpy(data, &max_packno, sizeof(uint8_t));
-		} else {
-			memcpy(data, &packno, sizeof(uint8_t));
-		}
+		memcpy(packet_no, &packno, sizeof(uint8_t));
+
+		// DATA packet size
+		memcpy(packt_sz, &pkt_sz, sizeof(int));
 
 		// Get the epoch time
 		clock_gettime(CLOCK_REALTIME, &send_time);
@@ -324,15 +296,20 @@ int main(void) {
 		// DATA epoch time
 		memcpy(ntime, &send_time, sizeof(struct timespec));
 
+#ifdef STRIG_DATA
 		// Get the string time, just for fun
-		strftime(buff, sizeof buff, "%D %T", gmtime(&send_time.tv_sec));
+		strftime(buff, string_sz, "%D %T", gmtime(&send_time.tv_sec));
+
 
 		//  DATA string time
-		memcpy(stime, buff, STRING_SZ);
+		memcpy(stime, buff, string_sz);
+#endif
 
+#ifdef DEBUG
 		// TODO move to 3 thread - send packet, get time, trigger gpio
 		// Get start time
 		clock_gettime(CLOCK_REALTIME, &start_time);
+#endif
 
 		// Trigger GPIO high
 	    ret = mraa_gpio_write(timePin, 1);
@@ -390,22 +367,103 @@ int main(void) {
 		} else {
 			pcap_perror(ppcap, "Failed to inject packet");
 			running = -1;
+			ret=MRAA_ERROR_UNSPECIFIED;
 		}
 
 		// clean
 		free(buf);
+#ifdef STRIG_DATA
+		free(buff);
+#endif
 
 		if (nDelay)
 			usleep(nDelay);
 
 		// stop if reached max no + 1
-		if (packno >= max_packno + 1) {
+		if (packno >= max_packno) {
 			running = -1;
 		}
-
 		// one more packet send
 		packno++;
 	}
+	return ret;
+}
+
+// Main
+int main(void) {
+
+	// VARS
+	int test_pkt_sz;
+
+	// GPIO mraa
+	mraa_result_t ret = MRAA_SUCCESS;
+
+	// init
+	test_loop = DATA_MAX / DATA_SZ ;
+
+	// EXEC
+
+	// initilize GPIO LED / ext trigger
+	mraa_init();
+	gpio = mraa_gpio_init(IOPIN);
+	if (gpio == NULL) {
+		fprintf(stderr, "Error in using pin%d, NO GPIO no TEST ", IOPIN);
+		exit(1);
+	}
+
+	// initilize GPIO trigger for rx board
+	timePin = mraa_gpio_init(TRGPIN);
+	if (timePin == NULL) {
+		fprintf(stderr, "Error in using pin%d, NO GPIO no TEST ", TRGPIN);
+		exit(1);
+	}
+
+	// set direction to OUT
+	ret = mraa_gpio_dir(gpio, MRAA_GPIO_OUT);
+	if (ret != MRAA_SUCCESS) {
+		mraa_result_print(ret);
+	}
+
+	ret = mraa_gpio_dir(timePin, MRAA_GPIO_OUT);
+	if (ret != MRAA_SUCCESS) {
+		mraa_result_print(ret);
+	}
+
+	printf("init-ed pin%d\n", IOPIN);
+
+	// registor signal fuc
+	signal(SIGINT, sig_handler);
+
+	// open interface mon0
+	ppcap = pcap_open_live("mon0", 800, 1, 20, errbuf);
+
+	if (ppcap == NULL) {
+		fprintf(stderr,"Could not open interface mon0 for packet injection: %s",
+				errbuf);
+		exit(1);
+	}
+
+	printf("\n Test GPIO .... \n");
+	ret = mraa_gpio_write(gpio, 0);
+	if (ret != MRAA_SUCCESS) {
+		mraa_result_print(ret);
+	}
+	sleep(1);
+	ret = mraa_gpio_write(gpio, 1);
+	if (ret != MRAA_SUCCESS) {
+		mraa_result_print(ret);
+	}
+	sleep(1);
+
+	printf("\n Let start tx .... \n");
+
+    // run test for pack step
+	while(test_loop > 0) {
+		test_pkt_sz = DATA_SZ * test_loop;
+		ret=run_test(test_pkt_sz);
+		test_loop--;
+	}
+
 
 	printf("\n Let finish ....\n");
 
