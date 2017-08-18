@@ -9,8 +9,8 @@
 #define SRC_CONFIG_H_
 
 // Config
-#define DEBUG 1
-#define STRIG_DATA 1
+//#define DEBUG 1
+//#define STRIG_DATA 1
 //
 #define WLANDEV "mon0"
 //
