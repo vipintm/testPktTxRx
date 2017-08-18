@@ -30,6 +30,7 @@
 // Constants
 #define BILLION  1000000000L // <- nano
 #define MSTONANOS 1000000L
+#define SECTOMS	1000L
 
 #ifdef DEBUG
 // dump pkt
@@ -80,6 +81,7 @@ int main() {
 	long int diffInNanos;
 	long int diffInSec;
 #endif
+	long int delayInSec;
 	long int delayInNanos;
 	float delayInMs;
 
@@ -237,24 +239,19 @@ int main() {
 
 			// TODO : extract time stamp <-- No use at this time
 
+			// A double check
+			if (packno > rx_pktno) {
+				printf("Somthing gone wrong counted pkt no %d > recived pkt no %d\n", packno, rx_pktno);
+			}
+
 			// Record all lost pkt
-			while (packno != rx_pktno) {
-				if(rx_pktno != packno && pkt_sz == rx_pktsz) {
+			while (packno < rx_pktno) {
 #ifdef DEBUG
-					printf("[%03d/%04d] @ Lost current tx :%d & rx :%d\n",
-						packno, pkt_sz, tx_pktno, rx_pktno);
+				printf("[%03d/%04d] @ Lost current tx :%d & rx :%d\n",
+					packno, pkt_sz, tx_pktno, rx_pktno);
 #else
-					printf("[%03d/%04d] @ Lost\n", packno, pkt_sz);
+				printf("[%03d/%04d] @ Lost\n", packno, pkt_sz);
 #endif
-				}
-				else if(rx_pktno != packno && pkt_sz != rx_pktsz) {
-#ifdef DEBUG
-					printf("[%03d/%04d] @ Lost current tx :%d & rx :%d\n",
-						packno, pkt_sz, tx_pktno, rx_pktno);
-#else
-					printf("[%03d/%04d] @ Lost\n", packno, pkt_sz);
-#endif
-				}
 				packno++;
 				if (packno > TEST_PER) {
 					packno = 0;
@@ -264,21 +261,25 @@ int main() {
 
 			// Calculate tx->rx time
 			if(tx_pktno == rx_pktno) {
-				// The packet should receive less than a second
 				if (end_time.tv_nsec >= tx_time.tv_nsec
 						&& end_time.tv_sec == tx_time.tv_sec) {
 					delayInNanos = (end_time.tv_nsec - tx_time.tv_nsec);
 					delayInMs = (float) delayInNanos / (float) MSTONANOS ;
+				} else if (end_time.tv_sec < tx_time.tv_sec) {
+					delayInSec = (end_time.tv_sec - start_time.tv_sec);
+					delayInNanos =((BILLION - start_time.tv_nsec) + end_time.tv_nsec);
+					delayInMs = ((float) delayInNanos / (float) MSTONANOS) + ((float) SECTOMS * (float) delayInSec);
 				} else {
 					// Something wrong, we are not considering this
 					delayInNanos = 9999;
 					delayInMs = 9999.0000;
 				}
-			} else if (tx_pktno == 0 || tx_pktno < rx_pktno) {
+			} else if (tx_pktno < rx_pktno) {
 				printf("Tx GPIO interrupt is not received \n");
-				if (tx_pktno < rx_pktno) {
-					tx_pktno = rx_pktno;
-				}
+			} else if (tx_pktno > rx_pktno) {
+				printf("Tx GPIO interrupt is too fast to catch up, run with more delay \n");
+			} else {
+				printf("This should not happen\n");
 			}
 
 #ifdef DEBUG
@@ -327,7 +328,6 @@ int main() {
 						rx_pktno, rx_pktsz, end_time.tv_sec, end_time.tv_nsec);
 			}
 #endif
-
 			// Check for max number of pkts
 			if ( tx_pktno >= TEST_PER && pkt_sz >= DATA_MAX) {
 				running = -1;
