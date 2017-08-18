@@ -240,7 +240,7 @@ int main() {
 			// TODO : extract time stamp <-- No use at this time
 
 			// A double check
-			if (packno > rx_pktno) {
+			if (rx_pktno == tx_pktno && packno > rx_pktno) {
 				printf("Somthing gone wrong counted pkt no %d > recived pkt no %d\n", packno, rx_pktno);
 			}
 
@@ -276,10 +276,16 @@ int main() {
 				}
 			} else if (tx_pktno < rx_pktno) {
 				printf("Tx GPIO interrupt is not received \n");
+				delayInNanos = 9999;
+				delayInMs = 9999.0000;
 			} else if (tx_pktno > rx_pktno) {
 				printf("Tx GPIO interrupt is too fast to catch up, run with more delay \n");
+				delayInNanos = 9999;
+				delayInMs = 9999.0000;
 			} else {
 				printf("This should not happen\n");
+				delayInNanos = 9999;
+				delayInMs = 9999.0000;
 			}
 
 #ifdef DEBUG
