@@ -94,8 +94,7 @@ int main() {
 	struct pcap_pkthdr packet_header;
 	char error_buffer[PCAP_ERRBUF_SIZE];
 	struct bpf_program filter;
-	char filter_exp[] =
-			"udp && src SRC_IP && dst DST_IP && src port SRC_PORT && dst port DST_PORT";
+	char filter_exp[100];
 	bpf_u_int32 netmask=0xffffff;
 
 #ifdef DEBUG
@@ -110,6 +109,11 @@ int main() {
 
 	// GPIO mraa
 	mraa_result_t ret = MRAA_SUCCESS;
+
+	// Create filter string
+	snprintf(filter_exp, sizeof(filter_exp),
+			"udp && src %s && dst %s && src port %d && dst port %d",
+			SRC_IP, DST_IP, SRC_PORT, DST_PORT);
 
 	// initilize GPIO
 	mraa_init();
