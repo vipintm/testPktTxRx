@@ -64,8 +64,8 @@ uint16_t inet_csum(const void *buf, size_t hdr_len);
 const uint8_t mac[6] = { 0x11, 0x22, 0x33, 0x44, 0x55, 0x66 };
 
 // IP address
-const char * to = SRC_IP;
-const char * from = DST_IP;
+const char * to = DST_IP;
+const char * from = SRC_IP;
 
 // Radiotap include/net/ieee80211_radiotap.h
 static const uint8_t u8aRadiotapHeader[] = { 0x00, 0x00, 0x18, 0x00, 0x0f, 0x80,

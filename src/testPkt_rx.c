@@ -65,7 +65,7 @@ void tx_interrupt(void* args)
 	clock_gettime(CLOCK_REALTIME, &tx_time);
 	++tx_pktno;
 	if (tx_pktno > TEST_PER) {
-		tx_pktno = 0;
+		tx_pktno = 1;
 	}
 }
 
@@ -302,15 +302,15 @@ int main() {
 
 			// Times
 			if(tx_pktno == rx_pktno) {
-				printf("Got a packet [%03d] at %ld.%09ld sec"
+				printf("Got a packet [%03d/%04d] at %ld.%09ld sec"
 						"(waiting %ld.%09ld sec) "
 						"tx->rx : %03.7f ms\n",
-						rx_pktno, end_time.tv_sec, end_time.tv_nsec,
+						rx_pktno, rx_pktsz, end_time.tv_sec, end_time.tv_nsec,
 						diffInSec, diffInNanos, delayInMs);
 			} else {
-				printf("Got a packet [%03d] at %ld.%09ld sec"
+				printf("Got a packet [%03d/%04d] at %ld.%09ld sec"
 						"(waiting %ld.%09ld sec)\n",
-						rx_pktno, end_time.tv_sec, end_time.tv_nsec,
+						rx_pktno, rx_pktsz, end_time.tv_sec, end_time.tv_nsec,
 						diffInSec, diffInNanos);
 			}
 
@@ -319,12 +319,12 @@ int main() {
 #else
 			// Times
 			if(tx_pktno == rx_pktno) {
-				printf("[%03d] @ %ld.%09ld "
+				printf("[%03d/%04d] @ %ld.%09ld "
 					"tx->rx :%03.7f ms\n",
-					rx_pktno, end_time.tv_sec, end_time.tv_nsec, delayInMs);
+					rx_pktno, rx_pktsz, end_time.tv_sec, end_time.tv_nsec, delayInMs);
 			} else {
-				printf("[%03d] @ %ld.%09ld tx->rx :NaNa\n",
-						rx_pktno, end_time.tv_sec, end_time.tv_nsec);
+				printf("[%03d/%04d] @ %ld.%09ld tx->rx :NaNa\n",
+						rx_pktno, rx_pktsz, end_time.tv_sec, end_time.tv_nsec);
 			}
 #endif
 
@@ -335,7 +335,7 @@ int main() {
 
 			// increment
 			if (packno >= TEST_PER) {
-				packno =0;
+				packno = 0;
 				pkt_sz = pkt_sz + DATA_STEP;
 			}
 
