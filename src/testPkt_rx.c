@@ -265,7 +265,7 @@ int main() {
 						&& end_time.tv_sec == tx_time.tv_sec) {
 					delayInNanos = (end_time.tv_nsec - tx_time.tv_nsec);
 					delayInMs = (float) delayInNanos / (float) MSTONANOS ;
-				} else if (end_time.tv_sec < tx_time.tv_sec) {
+				} else if (end_time.tv_sec > tx_time.tv_sec) {
 					delayInSec = (end_time.tv_sec - start_time.tv_sec);
 					delayInNanos =((BILLION - start_time.tv_nsec) + end_time.tv_nsec);
 					delayInMs = ((float) delayInNanos / (float) MSTONANOS) + ((float) SECTOMS * (float) delayInSec);

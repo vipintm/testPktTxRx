@@ -342,12 +342,12 @@ int run_test(uint16_t pkt_sz) {
 				diffSec = 1;
 				diffInNanos = 0;
 			}
-			printf("Send a packet [%d] at %ld.%09ld sec (with %ld.%09ld sec) \n",
-					packno, end_time.tv_sec, end_time.tv_nsec, diffSec,
+			printf("Send a packet [%03d/%04d] at %ld.%09ld sec (with %ld.%09ld sec) \n",
+					packno, pkt_sz, end_time.tv_sec, end_time.tv_nsec, diffSec,
 					diffInNanos);
 #else
-			printf("[%d] @ %ld.%09ld \n",
-					packno, end_time.tv_sec, end_time.tv_nsec);
+			printf("[%03d/%04d] @ %ld.%09ld \n",
+					packno, pkt_sz, end_time.tv_sec, end_time.tv_nsec);
 #endif
 		} else {
 			pcap_perror(ppcap, "Failed to inject packet");
