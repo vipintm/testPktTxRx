@@ -1,8 +1,5 @@
 /*
- * config.h
- *
- *  Created on: Aug 18, 2017
- *      Author: vipintm
+ * testPktTxRx general config
  */
 
 #ifndef SRC_CONFIG_H_
@@ -14,7 +11,7 @@
 //
 #define WLANDEV "mon0"
 //
-#define nDelay  10000 // 1000000 <- this is too much
+#define nDelay  10000000 // 1000000 <- this is too much
 #define IOPIN 8 // using gpio pin 40 (IO08)
 #define TRGPIN 9 // using gpio pin ?? (IO09)
 #define DATA_SZ 32 // (old : 200) first test data

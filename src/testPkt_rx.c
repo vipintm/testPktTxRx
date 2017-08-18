@@ -86,8 +86,8 @@ int main() {
 	// frame count info
 	uint8_t packno = 0;
 	uint8_t rx_pktno = 0;
-	uint8_t rx_pktsz = 0;
-	uint8_t pkt_sz = DATA_SZ;
+	uint16_t rx_pktsz = 0;
+	uint16_t pkt_sz = DATA_SZ;
 
 	// pcap
 	const u_char *packet;
@@ -105,7 +105,7 @@ int main() {
 	// pkt info
 	uint8_t *pktbuf;
 	uint8_t *pktnobuf;
-	uint8_t *pktszbuf;
+	uint16_t *pktszbuf;
 
 	// GPIO mraa
 	mraa_result_t ret = MRAA_SUCCESS;
@@ -225,8 +225,8 @@ int main() {
 			pktbuf = (uint8_t *) packet;
 			pktnobuf = (uint8_t *) (pktbuf + 96); // 96 ->> magic location
 			memcpy(&rx_pktno, pktnobuf, sizeof(uint8_t));
-			pktszbuf = (uint8_t *) (pktbuf + 97); // 97 --> magic location
-			memcpy(&rx_pktsz, pktszbuf, sizeof(uint8_t));
+			pktszbuf = (uint16_t *) (pktbuf + 97); // 97 --> magic location
+			memcpy(&rx_pktsz, pktszbuf, sizeof(uint16_t));
 
 #ifdef DEBUG
 			// Get pkt length

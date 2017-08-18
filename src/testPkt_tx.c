@@ -95,7 +95,7 @@ void sig_handler(int signo) {
 }
 
 // Let run the test for the size
-int run_test(uint8_t pkt_sz) {
+int run_test(uint16_t pkt_sz) {
 
 	// VARS
 
@@ -129,7 +129,7 @@ int run_test(uint8_t pkt_sz) {
 
 	// frame data parts
 	uint8_t *packet_no;
-	uint8_t *packt_sz;
+	uint16_t *packt_sz;
 	struct timespec *ntime;
 #ifdef STRIG_DATA
 	uint8_t *stime;
@@ -185,7 +185,7 @@ int run_test(uint8_t pkt_sz) {
 		ip = (struct iphdr *) (llc + sizeof(ipllc)); // ip hdr
 		udp = (struct udphdr *) (ip + 1); // udp hdr
 		packet_no = (uint8_t *) (udp + 1); // packet number
-		packt_sz = (uint8_t *) (packet_no + 1); // packet number
+		packt_sz = (uint16_t *) (packet_no + 1); // packet number
 		ntime = (struct timespec *) (packt_sz + 1); // Epoch time
 #ifdef STRIG_DATA
 		stime = (uint8_t *) (ntime + 1); // Date and Time in string
@@ -273,7 +273,7 @@ int run_test(uint8_t pkt_sz) {
 		memcpy(packet_no, &packno, sizeof(uint8_t));
 
 		// DATA packet size
-		memcpy(packt_sz, &pkt_sz, sizeof(uint8_t));
+		memcpy(packt_sz, &pkt_sz, sizeof(uint16_t));
 
 		// Get the epoch time
 		clock_gettime(CLOCK_REALTIME, &send_time);
@@ -374,7 +374,7 @@ int run_test(uint8_t pkt_sz) {
 int main(void) {
 
 	// VARS
-	uint8_t test_pkt_sz;
+	uint16_t test_pkt_sz;
 
 	// GPIO mraa
 	mraa_result_t ret = MRAA_SUCCESS;
