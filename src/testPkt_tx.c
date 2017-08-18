@@ -24,26 +24,15 @@
 #include <mraa.h>
 #include <pcap.h>
 //
+#include "config.h"
 
-// Config
-#define IOPIN 8 // using gpio pin 40 (IO08)
-#define TRGPIN 9 // using gpio pin ?? (IO09)
-#define DATA_SZ 32 // (old : 200) first test data
-#define DATA_STEP 32 // data size to increse
-#define DATA_MAX 512 // Maximum size of data
-#define TEST_PER 10 // No of test to run on same data size
-
-//debug
-//#define DEBUG 1
-//#define STRIG_DATA 1
+// Constants
+#define BILLION  1000000000L // <- nano
+#define MSTONANOS 1000000L
 
 // IEEE 802.11 Types <-- only data type required
 #define WLAN_FC_TYPE_DATA	2
 #define WLAN_FC_SUBTYPE_DATA	0
-
-// Constants
-#define BILLION  1000000000L // <- nano
-#define nDelay  1000000 // 1000000 <- this is too much
 
 /* Defined in include/linux/ieee80211.h */
 struct ieee80211_hdr {
@@ -75,8 +64,8 @@ uint16_t inet_csum(const void *buf, size_t hdr_len);
 const uint8_t mac[6] = { 0x11, 0x22, 0x33, 0x44, 0x55, 0x66 };
 
 // IP address
-const char * to = "255.255.255.255";
-const char * from = "192.168.1.1";
+const char * to = SRC_IP;
+const char * from = DST_IP;
 
 // Radiotap include/net/ieee80211_radiotap.h
 static const uint8_t u8aRadiotapHeader[] = { 0x00, 0x00, 0x18, 0x00, 0x0f, 0x80,
@@ -104,7 +93,6 @@ void sig_handler(int signo) {
         running = -1;
     }
 }
-
 
 // Let run the test for the size
 int run_test(uint8_t pkt_sz) {
@@ -232,8 +220,8 @@ int run_test(uint8_t pkt_sz) {
 		saddr.sin_family = AF_INET;
 
 		// IP ports
-		daddr.sin_port = htons(50505);
-		saddr.sin_port = htons(50505);
+		daddr.sin_port = htons(DST_PORT);
+		saddr.sin_port = htons(SRC_PORT);
 
 		// IP adress
 		inet_pton(AF_INET, to, (struct in_addr *) &daddr.sin_addr.s_addr);
@@ -428,10 +416,10 @@ int main(void) {
 	signal(SIGINT, sig_handler);
 
 	// open interface mon0
-	ppcap = pcap_open_live("mon0", 800, 1, 20, errbuf);
+	ppcap = pcap_open_live(WLANDEV, 800, 1, 20, errbuf);
 
 	if (ppcap == NULL) {
-		fprintf(stderr,"Could not open interface mon0 for packet injection: %s",
+		fprintf(stderr,"Could not open interface WLANDEV for packet injection: %s",
 				errbuf);
 		exit(1);
 	}

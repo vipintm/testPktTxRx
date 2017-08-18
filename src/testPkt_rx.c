@@ -25,30 +25,19 @@
 #include <pcap.h>
 #include <mraa.h>
 //
+#include "config.h"
 
-//debug
-//#define DEBUG 1
+// Constants
+#define BILLION  1000000000L // <- nano
+#define MSTONANOS 1000000L
 
 #ifdef DEBUG
 // dump pkt
 void pktdump(const u_char * pu8, int nLength);
 #endif
 
-// Interface
-#define WLANDEV "mon0"
-
-// Constants
-#define BILLION  1000000000L // <- nano
-#define MSTONANOS 1000000L
-#define nDelay 0 // 1000000 <- this is too much
-#define IOPIN 8 // using gpio pin 40 (IO08)
-#define TRGPIN 9 // using gpio pin ?? (IO09)
-#define DATA_SZ 100 // Just filling data
-#define STRING_SZ (DATA_SZ - 10)
-
 // exit vars
 sig_atomic_t running = 0;
-uint8_t max_packno = 100;
 
 // pcap context
 pcap_t *handle;
@@ -75,6 +64,9 @@ void tx_interrupt(void* args)
     // Get the tx time
 	clock_gettime(CLOCK_REALTIME, &tx_time);
 	++tx_pktno;
+	if (tx_pktno > TEST_PER) {
+		tx_pktno = 0;
+	}
 }
 
 //
@@ -87,7 +79,6 @@ int main() {
 #ifdef DEBUG
 	long int diffInNanos;
 	long int diffInSec;
-	long int delayInSec;
 #endif
 	long int delayInNanos;
 	float delayInMs;
@@ -95,6 +86,8 @@ int main() {
 	// frame count info
 	uint8_t packno = 0;
 	uint8_t rx_pktno = 0;
+	uint8_t rx_pktsz = 0;
+	uint8_t pkt_sz = DATA_SZ;
 
 	// pcap
 	const u_char *packet;
@@ -102,7 +95,7 @@ int main() {
 	char error_buffer[PCAP_ERRBUF_SIZE];
 	struct bpf_program filter;
 	char filter_exp[] =
-			"udp && src 192.168.1.1 && dst 255.255.255.255 && src port 50505 && dst port 50505";
+			"udp && src SRC_IP && dst DST_IP && src port SRC_PORT && dst port DST_PORT";
 	bpf_u_int32 netmask=0xffffff;
 
 #ifdef DEBUG
@@ -113,6 +106,7 @@ int main() {
 	// pkt info
 	uint8_t *pktbuf;
 	uint8_t *pktnobuf;
+	uint8_t *pktszbuf;
 
 	// GPIO mraa
 	mraa_result_t ret = MRAA_SUCCESS;
@@ -157,7 +151,7 @@ int main() {
 		exit(1);
 	}
 
-	// registor signal fuc
+	// Register signal fuc
 	signal(SIGINT, sig_handler);
 
 	// open interface mon0
@@ -227,6 +221,8 @@ int main() {
 			pktbuf = (uint8_t *) packet;
 			pktnobuf = (uint8_t *) (pktbuf + 96); // 96 ->> magic location
 			memcpy(&rx_pktno, pktnobuf, sizeof(uint8_t));
+			pktszbuf = (uint8_t *) (pktbuf + 97); // 97 --> magic location
+			memcpy(&rx_pktsz, pktszbuf, sizeof(uint8_t));
 
 #ifdef DEBUG
 			// Get pkt length
@@ -237,14 +233,29 @@ int main() {
 
 			// TODO : extract time stamp <-- No use at this time
 
-			if(rx_pktno != packno) {
+			// Record all lost pkt
+			while (packno != rx_pktno) {
+				if(rx_pktno != packno && pkt_sz == rx_pktsz) {
 #ifdef DEBUG
-				printf("[%03d] @Lost current tx :%d & rx :%d\n",
-						packno, tx_pktno, rx_pktno);
+					printf("[%03d/%04d] @ Lost current tx :%d & rx :%d\n",
+						packno, pkt_sz, tx_pktno, rx_pktno);
 #else
-				printf("[%03d] @Lost\n", packno);
+					printf("[%03d/%04d] @ Lost\n", packno, pkt_sz);
 #endif
-				packno = rx_pktno;
+				}
+				else if(rx_pktno != packno && pkt_sz != rx_pktsz) {
+#ifdef DEBUG
+					printf("[%03d/%04d] @ Lost current tx :%d & rx :%d\n",
+						packno, pkt_sz, tx_pktno, rx_pktno);
+#else
+					printf("[%03d/%04d] @ Lost\n", packno, pkt_sz);
+#endif
+				}
+				packno++;
+				if (packno > TEST_PER) {
+					packno = 0;
+					pkt_sz = pkt_sz + DATA_STEP;
+				}
 			}
 
 			// Calculate tx->rx time
@@ -289,9 +300,9 @@ int main() {
 			if(tx_pktno == rx_pktno) {
 				printf("Got a packet [%03d] at %ld.%09ld sec"
 						"(waiting %ld.%09ld sec) "
-						"tx->rx : %ld.%09ld sec\n",
+						"tx->rx : %03.7f ms\n",
 						rx_pktno, end_time.tv_sec, end_time.tv_nsec,
-						diffInSec, diffInNanos, delayInSec, delayInNanos);
+						diffInSec, diffInNanos, delayInMs);
 			} else {
 				printf("Got a packet [%03d] at %ld.%09ld sec"
 						"(waiting %ld.%09ld sec)\n",
@@ -305,8 +316,6 @@ int main() {
 			// Times
 			if(tx_pktno == rx_pktno) {
 				printf("[%03d] @ %ld.%09ld "
-					//"tx->rx : %ld \n",
-					//	rx_pktno, end_time.tv_sec, end_time.tv_nsec, delayInNanos);
 					"tx->rx :%03.7f ms\n",
 					rx_pktno, end_time.tv_sec, end_time.tv_nsec, delayInMs);
 			} else {
@@ -316,9 +325,16 @@ int main() {
 #endif
 
 			// Check for max number of pkts
-			if (packno >= max_packno || tx_pktno >= max_packno || rx_pktno >= max_packno) {
+			if ( tx_pktno >= TEST_PER && pkt_sz >= DATA_MAX) {
 				running = -1;
 			}
+
+			// increment
+			if (packno >= TEST_PER) {
+				packno =0;
+				pkt_sz = pkt_sz + DATA_STEP;
+			}
+
 		}
 	}
 
