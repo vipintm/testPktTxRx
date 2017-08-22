@@ -25,10 +25,7 @@
 #include <pcap.h>
 //
 #include "config.h"
-
-// Constants
-#define BILLION  1000000000L // <- nano
-#define MSTONANOS 1000000L
+#include "common.h"
 
 // IEEE 802.11 Types <-- only data type required
 #define WLAN_FC_TYPE_DATA	2

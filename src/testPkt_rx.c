@@ -26,11 +26,7 @@
 #include <mraa.h>
 //
 #include "config.h"
-
-// Constants
-#define BILLION  1000000000L // <- nano
-#define MSTONANOS 1000000L
-#define SECTOMS	1000L
+#include "common.h"
 
 #ifdef DEBUG
 // dump pkt
