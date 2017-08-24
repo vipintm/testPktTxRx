@@ -27,6 +27,7 @@
 #include "config.h"
 #include "common.h"
 
+#ifndef TX99
 // IEEE 802.11 Types <-- only data type required
 #define WLAN_FC_TYPE_DATA	2
 #define WLAN_FC_SUBTYPE_DATA	0
@@ -72,16 +73,18 @@ static const uint8_t u8aRadiotapHeader[] = { 0x00, 0x00, 0x18, 0x00, 0x0f, 0x80,
 // LLC header
 const uint8_t ipllc[8] = { 0xaa, 0xaa, 0x03, 0x00, 0x00, 0x00, 0x08, 0x00 };
 
-// exit vars
-sig_atomic_t running = 0;
-
 /* PCAP vars */
 char errbuf[PCAP_ERRBUF_SIZE];
 pcap_t *ppcap;
 
+#endif
+
 // GPIO mraa
 mraa_gpio_context gpio;
 mraa_gpio_context timePin;
+
+// exit vars
+sig_atomic_t running = 0;
 
 // Let close by CTL+C
 void sig_handler(int signo) {
