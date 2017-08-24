@@ -17,8 +17,8 @@ clean:
 	rm -f build/testPkt_rx *~
 
 push:
-	git add Makefile src/*.* scripts/*.* test/*.*
-	git commit Makefile src/*.* scripts/*.* test/*.* -m'Commit at $(CTIME)'
+	git add .gitignore Makefile src/*.* scripts/*.* test/*.*
+	git commit .gitignore Makefile src/*.* scripts/*.* test/*.* -m'Commit at $(CTIME)'
 	git push
 
 send: 
