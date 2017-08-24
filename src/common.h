@@ -18,15 +18,19 @@
 
 
 // GPIO functions
-/*static int GPIOExport(int pin);
+#ifdef SYSFSGPIO
+static int GPIOExport(int pin);
 static int GPIOUnexport(int pin);
 static int GPIODirection(int pin, int dir);
 static int GPIORead(int pin);
-static int GPIOWrite(int pin, int value);*/
+static int GPIOWrite(int pin, int value);
+#endif
 
 // TX99 functions
+#ifdef TX99
 int TX99setpower(int power);
 int TX99status(void);
 int TX99set(int value);
+#endif
 
 #endif /* SRC_COMMON_H_ */

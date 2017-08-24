@@ -9,6 +9,7 @@
 // Config
 //#define DEBUG 1
 //#define STRIG_DATA 1
+//#define SYSFSGPIO 1
 #define TX99 1
 //
 #define WLANDEV "mon0"

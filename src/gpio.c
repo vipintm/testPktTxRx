@@ -13,6 +13,8 @@
 #include "config.h"
 #include "common.h"
 
+#ifdef SYSFSGPIO
+
 #define BUFFER_MAX 3
 #define DIRECTION_MAX 35
 #define VALUE_MAX 30
@@ -120,3 +122,4 @@ static int GPIOWrite(int pin, int value) {
 	return(0);
 }
 
+#endif

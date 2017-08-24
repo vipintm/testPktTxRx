@@ -13,6 +13,8 @@
 #include "config.h"
 #include "common.h"
 
+#ifdef TX99
+
 #define BUFFER_MAX 3
 #define DIRECTION_MAX 35
 #define VALUE_MAX 30
@@ -80,3 +82,5 @@ int TX99set(int value) {
 	close(fd);
 	return(0);
 }
+
+#endif

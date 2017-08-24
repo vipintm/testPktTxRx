@@ -12,6 +12,11 @@ clean:
 	rm -f build/testPkt_tx *~
 	rm -f build/testPkt_rx *~
 
+push:
+	git add Makefile src/*.* scripts/*.* test/*.*
+	git commit Makefile src/*.* scripts/*.* test/*.* -m'date +"Commit at +%FT%T%z"'
+	git push
+
 send: 
 	scp build/testPkt_rx build/testPkt_tx scripts/setup.sh test/run.sh root@10.0.1.193:/media/realroot/
 	scp build/testPkt_rx build/testPkt_tx scripts/setup.sh test/run.sh root@10.0.1.192:/media/realroot/
