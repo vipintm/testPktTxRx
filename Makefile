@@ -1,6 +1,6 @@
 .PHONY: all pushtest clean push send install
 
-CTIME=$(shell date +%Y.%m.%d-%H:%M:%S)
+CTIME=$(shell date +%d.%m.%Y-%H:%M:%S)
 
 all: testPkt_tx testPkt_rx
 
