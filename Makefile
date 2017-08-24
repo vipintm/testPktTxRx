@@ -3,10 +3,10 @@ all: testPkt_tx testPkt_rx
 pushtest: clean testPkt_tx testPkt_rx send
 
 testPkt_tx : src/testPkt_tx.c
-	${CC} -Wall src/testPkt_tx.c -o build/testPkt_tx -lpcap -lmraa
+	${CC} -Wall src/testPkt_tx.c src/tx99.c -o build/testPkt_tx -lpcap -lmraa
 
 testPkt_rx : src/testPkt_rx.c
-	${CC} -Wall src/testPkt_rx.c -o build/testPkt_rx -lpcap -lmraa
+	${CC} -Wall src/testPkt_rx.c src/tx99.c -o build/testPkt_rx -lpcap -lmraa
 
 clean:
 	rm -f build/testPkt_tx *~

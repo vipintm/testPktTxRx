@@ -95,13 +95,13 @@ void sig_handler(int signo) {
 int run_test(uint16_t pkt_sz) {
 
 	// VARS
-
 	// Time measure vars
-	struct timespec send_time;
 #ifdef DEBUG
 	struct timespec start_time;
 #endif
 	struct timespec end_time;
+#ifndef TX99
+	struct timespec send_time;
 
 #ifdef DEBUG
 	long int diffInNanos;
@@ -138,12 +138,28 @@ int run_test(uint16_t pkt_sz) {
 	uint8_t fcchunk[2]; /* 802.11 header frame control */
 	struct sockaddr_in saddr, daddr; /* IP source and destination */
 
+#else
+	//TX99
+	uint8_t power = TX99_POWER;
+#endif
+
 	// GPIO mraa
 	mraa_result_t ret = MRAA_SUCCESS;
 
+#ifdef TX99
+
+	// set power
+	TX99setpower(power);
+
+	printf("Starting TX99 tx \n");
+
+	while (running == 0 ) {
+
+#else
 	printf("Starting tx for pkt size : %d\n",pkt_sz);
 
 	while (running == 0 && packno <= TEST_PER ) {
+#endif
 
 		// Make sure GPIO is low
 	    ret = mraa_gpio_write(gpio, 0);
@@ -155,6 +171,8 @@ int run_test(uint16_t pkt_sz) {
 	    if (ret != MRAA_SUCCESS) {
 	        mraa_result_print(ret);
 	    }
+
+#ifndef TX99
 
 #ifdef STRIG_DATA
 		// string buffer
@@ -287,6 +305,8 @@ int run_test(uint16_t pkt_sz) {
 		memcpy(stime, buff, string_sz);
 #endif
 
+#endif
+
 #ifdef DEBUG
 		// TODO move to 3 thread - send packet, get time, trigger gpio
 		// Get start time
@@ -305,8 +325,16 @@ int run_test(uint16_t pkt_sz) {
 	    }
 
 	    // Send packet
-		if (pcap_sendpacket(ppcap, buf, sz) == 0) {
+#ifdef TX99
+	    if (TX99set(START) == 0) {
+	    	if (nDelay)
+	    		usleep(nDelay);
+	    }
+	    if (TX99set(STOP) == 0) {
 
+#else
+		if (pcap_sendpacket(ppcap, buf, sz) == 0) {
+#endif
 			// GPIO to low
 		    ret = mraa_gpio_write(timePin, 0);
 		    if (ret != MRAA_SUCCESS) {
@@ -339,13 +367,33 @@ int run_test(uint16_t pkt_sz) {
 				diffSec = 1;
 				diffInNanos = 0;
 			}
+#ifdef TX99
+			printf("Send a packet at %ld.%09ld sec (with %ld.%09ld sec) \n",
+					end_time.tv_sec, end_time.tv_nsec, diffSec,
+					diffInNanos);
+#else
 			printf("Send a packet [%03d/%04d] at %ld.%09ld sec (with %ld.%09ld sec) \n",
 					packno, pkt_sz, end_time.tv_sec, end_time.tv_nsec, diffSec,
 					diffInNanos);
+#endif
+
+#else
+#ifdef TX99
+			printf("@ %ld.%09ld \n",
+					end_time.tv_sec, end_time.tv_nsec);
 #else
 			printf("[%03d/%04d] @ %ld.%09ld \n",
 					packno, pkt_sz, end_time.tv_sec, end_time.tv_nsec);
 #endif
+#endif
+
+#ifdef TX99
+		} else {
+			fprintf(stderr, "TX99 Packet send error");
+			running = -1;
+			ret=MRAA_ERROR_UNSPECIFIED;
+		}
+#else
 		} else {
 			pcap_perror(ppcap, "Failed to inject packet");
 			running = -1;
@@ -363,6 +411,7 @@ int run_test(uint16_t pkt_sz) {
 
 		// one more packet send
 		packno++;
+#endif
 	}
 	return ret;
 }
@@ -412,6 +461,7 @@ int main(void) {
 	// registor signal fuc
 	signal(SIGINT, sig_handler);
 
+#ifndef TX99
 	// open interface mon0
 	ppcap = pcap_open_live(WLANDEV, 800, 1, 20, errbuf);
 
@@ -420,6 +470,7 @@ int main(void) {
 				errbuf);
 		exit(1);
 	}
+#endif
 
 	printf("\n Test GPIO .... \n");
 	ret = mraa_gpio_write(gpio, 0);
@@ -441,7 +492,6 @@ int main(void) {
 		ret=run_test(test_pkt_sz);
 		test_loop++;
 	}
-
 
 	printf("\n Let finish ....\n");
 
@@ -467,12 +517,15 @@ int main(void) {
 		mraa_result_print(ret);
 	}
 
+#ifndef TX99
 	// close pcap
 	pcap_close(ppcap);
+#endif
 
 	return ret;
 }
 
+#ifndef TX99
 // check sum
 uint16_t inet_csum(const void *buf, size_t hdr_len) {
 	unsigned long sum = 0;
@@ -491,3 +544,4 @@ uint16_t inet_csum(const void *buf, size_t hdr_len) {
 
 	return (~sum);
 }
+#endif

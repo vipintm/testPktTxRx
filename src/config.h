@@ -9,6 +9,7 @@
 // Config
 //#define DEBUG 1
 //#define STRIG_DATA 1
+#define TX99 1
 //
 #define WLANDEV "mon0"
 //
@@ -24,5 +25,8 @@
 #define DST_IP "255.255.255.255"
 #define SRC_PORT 50505
 #define DST_PORT 50505
+
+// TX99
+#define TX99_POWER 20
 
 #endif /* SRC_CONFIG_H_ */
