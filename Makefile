@@ -1,3 +1,7 @@
+.PHONY: all pushtest clean push send install
+
+CTIME=$(shell date +%Y%m%d-%H:%M:%S)
+
 all: testPkt_tx testPkt_rx
 
 pushtest: clean testPkt_tx testPkt_rx send
@@ -14,7 +18,7 @@ clean:
 
 push:
 	git add Makefile src/*.* scripts/*.* test/*.*
-	git commit Makefile src/*.* scripts/*.* test/*.* -m'date +"Commit at +%FT%T%z"'
+	git commit Makefile src/*.* scripts/*.* test/*.* -m'Commit at $(CTIME)'
 	git push
 
 send: 
