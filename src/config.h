@@ -11,6 +11,8 @@
 //#define STRIG_DATA 1
 //#define SYSFSGPIO 1
 //#define TX99 1
+//#define CREATECSV 1
+//#define READENV 1
 //
 #define WLANDEV "mon0"
 //
