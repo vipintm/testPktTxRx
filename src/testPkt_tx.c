@@ -131,6 +131,7 @@ int run_test(uint16_t pkt_sz) {
 	uint8_t *packet_no;
 	uint16_t *packt_sz;
 	struct timespec *ntime;
+	uint8_t *magic_no;
 #ifdef STRIG_DATA
 	uint8_t *stime;
 #endif
@@ -138,6 +139,8 @@ int run_test(uint16_t pkt_sz) {
 	/* Other useful bits */
 	uint8_t *buf;
 	size_t sz;
+	size_t app_sz;
+	uint8_t app_magic_no = MAGIC_ID;
 	uint8_t fcchunk[2]; /* 802.11 header frame control */
 	struct sockaddr_in saddr, daddr; /* IP source and destination */
 
@@ -179,7 +182,8 @@ int run_test(uint16_t pkt_sz) {
 
 #ifdef STRIG_DATA
 		// string buffer
-		string_sz = pkt_sz - (sizeof(packt_sz)+sizeof(packet_no)+sizeof(struct timespec));
+		string_sz = pkt_sz - (sizeof(packt_sz)+sizeof(packet_no)
+							+sizeof(struct timespec)+sizeof(magic_no));
 		if(string_sz <= 0) {
 			fprintf(stderr, "Packet size is less than minimum required");
 			exit(1);
@@ -187,11 +191,19 @@ int run_test(uint16_t pkt_sz) {
 		buff = (char *) malloc(string_sz);
 #endif
 
+		// Application size
+		app_sz = sizeof(ipllc) + sizeof(struct iphdr) + sizeof(struct udphdr)
+						+ sizeof(uint8_t) + sizeof(struct timespec) + sizeof(uint8_t);
+
 		// Total buffer size
-		sz = sizeof(u8aRadiotapHeader) + sizeof(struct ieee80211_hdr)
-				+ sizeof(ipllc) + sizeof(struct iphdr) + sizeof(struct udphdr)
-				+ /*0*/sizeof(uint8_t) + sizeof(struct timespec) + pkt_sz /* data */
-				+ 4 /* FCS */;
+		if (app_sz < pkt_sz) {
+			sz = sizeof(u8aRadiotapHeader) + sizeof(struct ieee80211_hdr)
+				+ pkt_sz /* data */ + 4 /* FCS */;
+		} else {
+			sz = sizeof(u8aRadiotapHeader) + sizeof(struct ieee80211_hdr)
+				+ (app_sz - pkt_sz) /* data size fix */
+				+ pkt_sz /* data */ + 4 /* FCS */;
+		}
 
 		// pkt buffer
 		buf = (uint8_t *) malloc(sz);
@@ -205,8 +217,9 @@ int run_test(uint16_t pkt_sz) {
 		packet_no = (uint8_t *) (udp + 1); // packet number
 		packt_sz = (uint16_t *) (packet_no + 1); // packet number
 		ntime = (struct timespec *) (packt_sz + 1); // Epoch time
+		magic_no = (uint8_t *) (ntime + 1); // magic number
 #ifdef STRIG_DATA
-		stime = (uint8_t *) (ntime + 1); // Date and Time in string
+		stime = (uint8_t *) (magic_no + 1); // Date and Time in string
 #endif
 
 		// The radiotap header
@@ -298,6 +311,9 @@ int run_test(uint16_t pkt_sz) {
 
 		// DATA epoch time
 		memcpy(ntime, &send_time, sizeof(struct timespec));
+
+		// MAGIC number
+		memcpy(magic_no, &app_magic_no, sizeof(uint8_t));
 
 #ifdef STRIG_DATA
 		// Get the string time, just for fun
