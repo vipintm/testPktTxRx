@@ -215,11 +215,11 @@ int run_test(uint16_t pkt_sz) {
 		ip = (struct iphdr *) (llc + sizeof(ipllc)); // ip hdr
 		udp = (struct udphdr *) (ip + 1); // udp hdr
 		packet_no = (uint8_t *) (udp + 1); // packet number
-		packt_sz = (uint16_t *) (packet_no + 1); // packet number
-		ntime = (struct timespec *) (packt_sz + 1); // Epoch time
-		magic_no = (uint8_t *) (ntime + 1); // magic number
+		packt_sz = (uint16_t *) (packet_no + 1); // packet size
+		magic_no = (uint8_t *) (packt_sz + 1); // magic number
+		ntime = (struct timespec *) (magic_no + 1); // Epoch time
 #ifdef STRIG_DATA
-		stime = (uint8_t *) (magic_no + 1); // Date and Time in string
+		stime = (uint8_t *) (ntime + 1); // Date and Time in string
 #endif
 
 		// The radiotap header
@@ -306,14 +306,14 @@ int run_test(uint16_t pkt_sz) {
 		// DATA packet size
 		memcpy(packt_sz, &pkt_sz, sizeof(uint16_t));
 
+		// MAGIC number
+		memcpy(magic_no, &app_magic_no, sizeof(uint8_t));
+
 		// Get the epoch time
 		clock_gettime(CLOCK_REALTIME, &send_time);
 
 		// DATA epoch time
 		memcpy(ntime, &send_time, sizeof(struct timespec));
-
-		// MAGIC number
-		memcpy(magic_no, &app_magic_no, sizeof(uint8_t));
 
 #ifdef STRIG_DATA
 		// Get the string time, just for fun

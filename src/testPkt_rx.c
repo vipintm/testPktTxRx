@@ -86,6 +86,7 @@ int main() {
 	uint8_t rx_pktno = 0;
 	uint16_t rx_pktsz = 0;
 	uint16_t pkt_sz = DATA_SZ;
+	uint8_t magic_no = 0;
 
 	// pcap
 	const u_char *packet;
@@ -104,6 +105,7 @@ int main() {
 	uint8_t *pktbuf;
 	uint8_t *pktnobuf;
 	uint16_t *pktszbuf;
+	uint8_t *pktmagicbuf;
 
 	// GPIO mraa
 	mraa_result_t ret = MRAA_SUCCESS;
@@ -225,6 +227,8 @@ int main() {
 			memcpy(&rx_pktno, pktnobuf, sizeof(uint8_t));
 			pktszbuf = (uint16_t *) (pktbuf + 97); // 97 --> magic location
 			memcpy(&rx_pktsz, pktszbuf, sizeof(uint16_t));
+			pktmagicbuf = (uint8_t *) (pktbuf + 98); // 98 --> magic location
+			memcpy(&magic_no, pktmagicbuf, sizeof(uint8_t));
 
 #ifdef DEBUG
 			// Get pkt length
@@ -235,9 +239,14 @@ int main() {
 
 			// TODO : extract time stamp <-- No use at this time
 
+			// magic no warning check
+			if (magic_no != MAGIC_ID) {
+				printf("Something gone wrong Magic No %d \n", magic_no);
+			}
+
 			// A double check
 			if (rx_pktno == tx_pktno && packno > rx_pktno) {
-				printf("Somthing gone wrong counted pkt no %d > recived pkt no %d\n", packno, rx_pktno);
+				printf("Something gone wrong counted pkt no %d > recived pkt no %d\n", packno, rx_pktno);
 			}
 
 			// Record all lost pkt
