@@ -149,7 +149,7 @@ int main() {
 	printf("init-ed pin%d and pin%d\n", IOPIN, TRGPIN);
 
 	// register interrupt for tx gpio
-    ret = mraa_gpio_isr(timePin, MRAA_GPIO_EDGE_RISING, &tx_interrupt, NULL);
+    	ret = mraa_gpio_isr(timePin, MRAA_GPIO_EDGE_RISING, &tx_interrupt, NULL);
 	if (ret != MRAA_SUCCESS) {
 		mraa_result_print(ret);
 		exit(1);
@@ -227,7 +227,7 @@ int main() {
 			memcpy(&rx_pktno, pktnobuf, sizeof(uint8_t));
 			pktszbuf = (uint16_t *) (pktbuf + 97); // 97 --> magic location
 			memcpy(&rx_pktsz, pktszbuf, sizeof(uint16_t));
-			pktmagicbuf = (uint16_t *) (pktbuf + 98); // 98 --> magic location
+			pktmagicbuf = (uint16_t *) (pktbuf + 99); // 98 --> magic location
 			memcpy(&magic_no, pktmagicbuf, sizeof(uint16_t));
 
 #ifdef DEBUG
@@ -241,7 +241,7 @@ int main() {
 
 			// magic no warning check
 			if (magic_no != MAGIC_ID) {
-				printf("Something gone wrong Magic No %d \n", magic_no);
+				printf("Something gone wrong Magic No %2x \n", magic_no);
 			}
 
 			// A double check

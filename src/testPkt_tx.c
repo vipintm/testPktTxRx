@@ -183,25 +183,28 @@ int run_test(uint16_t pkt_sz) {
 #ifdef STRIG_DATA
 		// string buffer
 		string_sz = pkt_sz - (sizeof(packt_sz)+sizeof(packet_no)
-							+sizeof(struct timespec)+sizeof(magic_no));
-		if(string_sz <= 0) {
-			fprintf(stderr, "Packet size is less than minimum required");
+				+sizeof(struct timespec)+sizeof(magic_no));
+		if(string_sz <= 0) {fprintf(stderr, 
+				"Packet size is less than minimum required");
 			exit(1);
 		}
 		buff = (char *) malloc(string_sz);
 #endif
 
 		// Application size
-		app_sz = sizeof(ipllc) + sizeof(struct iphdr) + sizeof(struct udphdr)
-						+ sizeof(uint8_t) + sizeof(uint16_t)
-						+ sizeof(uint16_t) + sizeof(struct timespec);
+		app_sz = sizeof(ipllc) + sizeof(struct iphdr) 
+				+ sizeof(struct udphdr)
+				+ sizeof(uint8_t) + sizeof(uint16_t)
+				+ sizeof(uint16_t) + sizeof(struct timespec);
 
 		// Total buffer size
 		if (app_sz < pkt_sz) {
-			sz = sizeof(u8aRadiotapHeader) + sizeof(struct ieee80211_hdr)
+			sz = sizeof(u8aRadiotapHeader) 
+				+ sizeof(struct ieee80211_hdr)
 				+ pkt_sz /* data */ + 4 /* FCS */;
 		} else {
-			sz = sizeof(u8aRadiotapHeader) + sizeof(struct ieee80211_hdr)
+			sz = sizeof(u8aRadiotapHeader) 
+				+ sizeof(struct ieee80211_hdr)
 				+ (app_sz - pkt_sz) /* data size fix */
 				+ pkt_sz /* data */ + 4 /* FCS */;
 		}
