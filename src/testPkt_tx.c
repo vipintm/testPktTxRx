@@ -131,7 +131,7 @@ int run_test(uint16_t pkt_sz) {
 	uint8_t *packet_no;
 	uint16_t *packt_sz;
 	struct timespec *ntime;
-	uint8_t *magic_no;
+	uint16_t *magic_no;
 #ifdef STRIG_DATA
 	uint8_t *stime;
 #endif
@@ -140,7 +140,7 @@ int run_test(uint16_t pkt_sz) {
 	uint8_t *buf;
 	size_t sz;
 	size_t app_sz;
-	uint8_t app_magic_no = MAGIC_ID;
+	uint16_t app_magic_no = MAGIC_ID;
 	uint8_t fcchunk[2]; /* 802.11 header frame control */
 	struct sockaddr_in saddr, daddr; /* IP source and destination */
 
@@ -193,7 +193,8 @@ int run_test(uint16_t pkt_sz) {
 
 		// Application size
 		app_sz = sizeof(ipllc) + sizeof(struct iphdr) + sizeof(struct udphdr)
-						+ sizeof(uint8_t) + sizeof(struct timespec) + sizeof(uint8_t);
+						+ sizeof(uint8_t) + sizeof(uint16_t)
+						+ sizeof(uint16_t) + sizeof(struct timespec);
 
 		// Total buffer size
 		if (app_sz < pkt_sz) {
@@ -216,7 +217,7 @@ int run_test(uint16_t pkt_sz) {
 		udp = (struct udphdr *) (ip + 1); // udp hdr
 		packet_no = (uint8_t *) (udp + 1); // packet number
 		packt_sz = (uint16_t *) (packet_no + 1); // packet size
-		magic_no = (uint8_t *) (packt_sz + 1); // magic number
+		magic_no = (uint16_t *) (packt_sz + 1); // magic number
 		ntime = (struct timespec *) (magic_no + 1); // Epoch time
 #ifdef STRIG_DATA
 		stime = (uint8_t *) (ntime + 1); // Date and Time in string
@@ -307,7 +308,7 @@ int run_test(uint16_t pkt_sz) {
 		memcpy(packt_sz, &pkt_sz, sizeof(uint16_t));
 
 		// MAGIC number
-		memcpy(magic_no, &app_magic_no, sizeof(uint8_t));
+		memcpy(magic_no, &app_magic_no, sizeof(uint16_t));
 
 		// Get the epoch time
 		clock_gettime(CLOCK_REALTIME, &send_time);
