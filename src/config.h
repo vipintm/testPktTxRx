@@ -16,7 +16,7 @@
 //
 #define WLANDEV "mon0"
 //
-#define MAGIC_ID 0xf6
+#define MAGIC_ID 0xf6f7
 #define nDelay  50000 // 1000000 <- this is too much
 #define IOPIN 8 // using gpio pin 40 (IO08)
 #define TRGPIN 9 // using gpio pin ?? (IO09)
