@@ -255,7 +255,7 @@ int main() {
 				printf("[%03d/%04d] @ Lost current tx :%d & rx :%d\n",
 					packno, pkt_sz, tx_pktno, rx_pktno);
 #else
-				printf("[%03d/%04d] @ Lost\n", packno, pkt_sz);
+				printf("[%03d/%04d:%04d] @ Lost\n", packno, pkt_sz, rx_pktsz);
 #endif
 				packno++;
 				if (packno > TEST_PER) {
