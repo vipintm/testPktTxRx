@@ -250,7 +250,7 @@ int main() {
 			}
 
 			// Record all lost pkt
-			while (packno < rx_pktno) {
+			while (packno < rx_pktno && magic_no == MAGIC_ID) {
 #ifdef DEBUG
 				printf("[%03d/%04d] @ Lost current tx :%d & rx :%d\n",
 					packno, pkt_sz, tx_pktno, rx_pktno);
