@@ -261,7 +261,7 @@ int main() {
 #endif
 				packno++;
 				if (packno > TEST_PER) {
-					packno = 0;
+					packno = 1;
 					pkt_sz = pkt_sz + DATA_STEP;
 				}
 			}
