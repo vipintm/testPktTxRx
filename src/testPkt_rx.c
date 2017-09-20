@@ -35,6 +35,7 @@ void pktdump(const u_char * pu8, int nLength);
 
 // exit vars
 sig_atomic_t running = 0;
+sig_atomic_t no_packet = 0;
 
 // pcap context
 pcap_t *handle;
@@ -65,6 +66,19 @@ void tx_interrupt(void* args)
 		tx_pktno = 1;
 	}
 }
+
+// Let exit the program if last pkts are lost
+void wait_interrupt(int signum) {
+	if(tx_pktno > 0)
+		++no_packet;
+	if(no_packet > THR_WAIT_TIME) {
+		running = -1;
+	} else {
+		signal(SIGALRM, wait_interrupt);
+		alarm(WAIT_DELAY);
+	}
+}
+
 
 //
 int main() {
@@ -158,6 +172,13 @@ int main() {
 	// Register signal fuc
 	signal(SIGINT, sig_handler);
 
+
+	// Setup signal handler for the SIGALRM signal
+	signal(SIGALRM, wait_interrupt);
+	// Setup initial alarm
+	alarm(WAIT_DELAY);
+
+
 	// open interface mon0
 	handle = pcap_open_live(WLANDEV, BUFSIZ, 1, 0, error_buffer);
 	if (handle == NULL) {
@@ -220,6 +241,7 @@ int main() {
 
 			// got a pkt
 			++packno;
+			no_packet = 0;
 
 			// pkt number from data
 			pktbuf = (uint8_t *) packet;
