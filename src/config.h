@@ -24,8 +24,8 @@
 #define DATA_STEP 32 // data size to increse
 #define DATA_MAX 96 // Maximum size of data
 #define TEST_PER 10 // No of test to run on same data size
-#define WAIT_DELAY 60 // seconds
-#define THR_WAIT_TIME 5 // 5 * WAIT_DELAY
+#define WAIT_DELAY 30 // seconds
+#define THR_WAIT_TIME 3 // 5 * WAIT_DELAY
 //
 #define SRC_IP "192.168.1.1"
 #define DST_IP "255.255.255.255"

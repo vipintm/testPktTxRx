@@ -47,7 +47,7 @@ mraa_gpio_context timePin;
 // Let close by CTL+C
 void sig_handler(int signo) {
     if (signo == SIGINT) {
-        printf("Stopping pkt rx and shutdown IO%d and IO%d\n", IOPIN,TRGPIN);
+        printf("User interrupt received, Stopping pkt rx and shutdown IO%d and IO%d\n", IOPIN,TRGPIN);
         // lets stop pcap listen
         pcap_breakloop(handle);
         running = -1;
@@ -72,6 +72,8 @@ void wait_interrupt(int signum) {
 	if(tx_pktno > 0)
 		++no_packet;
 	if(no_packet > THR_WAIT_TIME) {
+		printf("Other packets are lots, Stopping pkt rx and shutdown IO%d and IO%d\n", IOPIN,TRGPIN);
+		pcap_breakloop(handle);
 		running = -1;
 	} else {
 		signal(SIGALRM, wait_interrupt);
