@@ -250,7 +250,9 @@ int main() {
 			}
 
 			// Record all lost pkt
-			while (packno < rx_pktno && magic_no == MAGIC_ID) {
+			while (((packno < rx_pktno && rx_pktsz == pkt_sz)
+					|| (packno > rx_pktno && rx_pktsz != pkt_sz))
+					&& magic_no == MAGIC_ID) {
 #ifdef DEBUG
 				printf("[%03d/%04d] @ Lost current tx :%d & rx :%d\n",
 					packno, pkt_sz, tx_pktno, rx_pktno);
@@ -273,11 +275,12 @@ int main() {
 				} else if (end_time.tv_sec > tx_time.tv_sec) {
 					delayInSec = (end_time.tv_sec - start_time.tv_sec);
 					delayInNanos =((BILLION - start_time.tv_nsec) + end_time.tv_nsec);
-					delayInMs = ((float) delayInNanos / (float) MSTONANOS) + ((float) SECTOMS * (float) delayInSec);
+					delayInMs = ((float) delayInNanos / (float) MSTONANOS) +
+									((float) SECTOMS * (float) delayInSec);
 				} else {
 					// Something wrong, we are not considering this
 					delayInNanos = 9999;
-					delayInMs = 9999.0000;
+					delayInMs = 9999.9999;
 				}
 			} else if (tx_pktno < rx_pktno) {
 				printf("Tx GPIO interrupt is not received \n");

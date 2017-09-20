@@ -16,13 +16,13 @@
 //
 #define WLANDEV "mon0"
 //
-#define MAGIC_ID 0xf6f7
-#define nDelay  50000 // 1000000 <- this is too much
+#define MAGIC_ID 0xf6f7 // TODO use this for filtering instead of MAC??
+#define nDelay  100000 // 1000000 <- this is too much
 #define IOPIN 8 // using gpio pin 40 (IO08)
 #define TRGPIN 9 // using gpio pin ?? (IO09)
 #define DATA_SZ 32 // (old : 200) first test data
 #define DATA_STEP 32 // data size to increse
-#define DATA_MAX 512 // Maximum size of data
+#define DATA_MAX 98 // Maximum size of data
 #define TEST_PER 10 // No of test to run on same data size
 //
 #define SRC_IP "192.168.1.1"

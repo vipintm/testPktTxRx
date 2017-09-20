@@ -59,6 +59,8 @@ struct ieee80211_hdr_qos {
 uint16_t inet_csum(const void *buf, size_t hdr_len);
 
 // MAC address
+// IMP Don't change MAC address -
+//	This is used in Kernel time measurement code to filter
 const uint8_t mac[6] = { 0x11, 0x22, 0x33, 0x44, 0x55, 0x66 };
 
 // IP address
@@ -359,12 +361,12 @@ int run_test(uint16_t pkt_sz) {
 		if (pcap_sendpacket(ppcap, buf, sz) == 0) {
 #endif
 			// GPIO to low
-		    ret = mraa_gpio_write(timePin, 0);
+		    ret = mraa_gpio_write(gpio, 0);
 		    if (ret != MRAA_SUCCESS) {
 		        mraa_result_print(ret);
 		    }
 
-		    ret = mraa_gpio_write(gpio, 0);
+		    ret = mraa_gpio_write(timePin, 0);
 		    if (ret != MRAA_SUCCESS) {
 		        mraa_result_print(ret);
 		    }
