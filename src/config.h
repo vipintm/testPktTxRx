@@ -22,7 +22,7 @@
 #define TRGPIN 9 // using gpio pin ?? (IO09)
 #define DATA_SZ 32 // (old : 200) first test data
 #define DATA_STEP 32 // data size to increse
-#define DATA_MAX 96 // Maximum size of data
+#define DATA_MAX 512 // Maximum size of data
 #define TEST_PER 10 // No of test to run on same data size
 #define WAIT_DELAY 1 // seconds
 #define THR_WAIT_TIME 10 // 5 * WAIT_DELAY
