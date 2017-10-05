@@ -291,6 +291,8 @@ int main() {
 			}
 
 			// Calculate tx->rx time
+			delayInSec = 0;
+			delayInNanos = 0;
 			if(tx_pktno == rx_pktno) {
 				if (end_time.tv_nsec >= tx_time.tv_nsec
 						&& end_time.tv_sec == tx_time.tv_sec) {
@@ -370,7 +372,7 @@ int main() {
 			if(tx_pktno == rx_pktno) {
 				printf("80211zero:testPkt_rx:%04d,%03d,%ld.%09ld,%ld.%09ld\n",
 					rx_pktsz, rx_pktno, end_time.tv_sec,
-					end_time.tv_nsec, diffInSec, diffInNanos);
+					end_time.tv_nsec, delayInSec, delayInNanos);
 #endif
 			} else {
 				printf("[%03d/%04d] @ %ld.%09ld tx->rx :NaNa\n",
