@@ -164,7 +164,10 @@ int run_test(uint16_t pkt_sz) {
 	while (running == 0 ) {
 
 #else
+
+#ifndef TESTON
 	printf("Starting tx for pkt size : %d\n",pkt_sz);
+#endif
 
 	while (running == 0 && packno <= TEST_PER ) {
 #endif
@@ -407,8 +410,14 @@ int run_test(uint16_t pkt_sz) {
 			printf("@ %ld.%09ld \n",
 					end_time.tv_sec, end_time.tv_nsec);
 #else
+
+#ifndef TESTON
 			printf("[%03d/%04d] @ %ld.%09ld \n",
 					packno, pkt_sz, end_time.tv_sec, end_time.tv_nsec);
+#else
+			printf("80211zero:testPkt_tx:%04d,%03d,%ld.%09ld\n",
+								pkt_sz, packno, end_time.tv_sec, end_time.tv_nsec);
+#endif
 #endif
 #endif
 

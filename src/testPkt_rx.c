@@ -308,14 +308,17 @@ int main() {
 				}
 			} else if (tx_pktno < rx_pktno) {
 				printf("Tx GPIO interrupt is not received \n");
+				delayInSec = 9999;
 				delayInNanos = 9999;
 				delayInMs = 9999.0000;
 			} else if (tx_pktno > rx_pktno) {
 				printf("Tx GPIO interrupt is too fast to catch up, run with more delay \n");
+				delayInSec = 9999;
 				delayInNanos = 9999;
 				delayInMs = 9999.0000;
 			} else {
 				printf("This should not happen\n");
+				delayInSec = 9999;
 				delayInNanos = 9999;
 				delayInMs = 9999.0000;
 			}
@@ -357,10 +360,18 @@ int main() {
 			pktdump(packet, pktlength);
 #else
 			// Times
+#ifndef TESTON
 			if(tx_pktno == rx_pktno) {
 				printf("[%03d/%04d] @ %ld.%09ld "
 					"tx->rx :%03.7f ms\n",
 					rx_pktno, rx_pktsz, end_time.tv_sec, end_time.tv_nsec, delayInMs);
+#else
+			// only useful result
+			if(tx_pktno == rx_pktno) {
+				printf("80211zero:testPkt_rx:%04d,%03d,%ld.%09ld,%ld.%09ld\n",
+					rx_pktsz, rx_pktno, end_time.tv_sec,
+					end_time.tv_nsec, diffInSec, diffInNanos);
+#endif
 			} else {
 				printf("[%03d/%04d] @ %ld.%09ld tx->rx :NaNa\n",
 						rx_pktno, rx_pktsz, end_time.tv_sec, end_time.tv_nsec);

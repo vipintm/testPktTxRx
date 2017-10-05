@@ -13,6 +13,7 @@
 //#define TX99 1
 //#define CREATECSV 1
 //#define READENV 1
+#define TESTON 1
 //
 #define WLANDEV "mon0"
 //
