@@ -370,9 +370,11 @@ int main() {
 #else
 			// only useful result
 			if(tx_pktno == rx_pktno) {
-				printf("80211zero:testPkt_rx:%04d,%03d,%ld.%09ld,%ld.%09ld\n",
-					rx_pktsz, rx_pktno, end_time.tv_sec,
-					end_time.tv_nsec, delayInSec, delayInNanos);
+				printf("80211zero:testPkt_rx:%04d,%03d,%ld.%09ld,%ld.%09ld,%ld.%09ld\n",
+					rx_pktsz, rx_pktno,
+					tx_time.tv_sec, tx_time.tv_nsec,
+					end_time.tv_sec, end_time.tv_nsec,
+					delayInSec, delayInNanos);
 #endif
 			} else {
 				printf("[%03d/%04d] @ %ld.%09ld tx->rx :NaNa\n",

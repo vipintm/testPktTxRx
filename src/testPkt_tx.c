@@ -101,7 +101,7 @@ int run_test(uint16_t pkt_sz) {
 
 	// VARS
 	// Time measure vars
-#ifdef DEBUG
+#if defined(DEBUG) || defined(TESTON)
 	struct timespec start_time;
 #endif
 	struct timespec end_time;
@@ -335,7 +335,7 @@ int run_test(uint16_t pkt_sz) {
 
 #endif
 
-#ifdef DEBUG
+#if defined(DEBUG) || defined(TESTON)
 		// TODO move to 3 thread - send packet, get time, trigger gpio
 		// Get start time
 		clock_gettime(CLOCK_REALTIME, &start_time);
@@ -415,8 +415,9 @@ int run_test(uint16_t pkt_sz) {
 			printf("[%03d/%04d] @ %ld.%09ld \n",
 					packno, pkt_sz, end_time.tv_sec, end_time.tv_nsec);
 #else
-			printf("80211zero:testPkt_tx:%04d,%03d,%ld.%09ld\n",
-								pkt_sz, packno, end_time.tv_sec, end_time.tv_nsec);
+			printf("80211zero:testPkt:tx:%04d,%03d,%ld.%09ld,%ld.%09ld\n",
+								pkt_sz, packno, start_time.tv_sec, start_time.tv_nsec,
+								end_time.tv_sec, end_time.tv_nsec);
 #endif
 #endif
 #endif
